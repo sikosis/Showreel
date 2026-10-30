@@ -3,6 +3,7 @@ TYPE = APP
 APP_MIME_SIG = application/x-vnd.Sikosis-Showreel
 SRCS = \
 	src/Main.cpp \
+	src/SourceFileDiscovery.cpp \
 	src/ShowreelApplication.cpp \
 	src/ShowreelWindow.cpp
 RDEFS = resources/Showreel.rdef
@@ -12,7 +13,7 @@ WARNINGS = ALL
 CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.14
+VERSION = 0.15
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build

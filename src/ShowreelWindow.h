@@ -3,9 +3,14 @@
 
 #include <Window.h>
 
+#include <String.h>
+
+#include <vector>
+
 
 class BButton;
 class BFilePanel;
+class BListView;
 class BStringView;
 
 
@@ -19,11 +24,15 @@ public:
 
 private:
 	void ChooseProjectFolder();
+	void ClearPlaylist();
+	void PopulatePlaylist(const char* folderPath);
 	void ProjectFolderChosen(BMessage* message);
 
 	BFilePanel* fFolderPanel;
 	BStringView* fFolderPathView;
+	BListView* fPlaylistView;
 	BButton* fPlayButton;
+	std::vector<BString> fPlaylistPaths;
 };
 
 #endif

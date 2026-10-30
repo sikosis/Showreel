@@ -92,7 +92,7 @@ The main risk is that Pe may not expose every property the loop needs through sc
 - [ ] Spike: on a Haiku machine, dump Tracker's and Pe's scripting suites with `hey` and write down which properties exist.
 - [ ] Prove the loop by hand in a shell script: open a file, list windows, scroll, close.
 - [ ] Build the driver layer with two backends, `hey` and native BMessenger, behind one interface.
-- [ ] Build discovery and the playlist model.
+- [x] Build discovery and populate the playlist model.
 - [ ] Build the player state machine (idle, opening, scrolling, dwelling, closing).
 - [x] Build the initial native window shell.
 - [ ] Add settings and connect the window to the playlist and player.

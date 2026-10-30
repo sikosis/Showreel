@@ -1,15 +1,16 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.14-f5a623" alt="Version v0.14">
+  <img src="https://img.shields.io/badge/version-v0.15-f5a623" alt="Version v0.15">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
 
 Showreel is a native Haiku app for presenting a project's source files as a
-slow-scrolling slideshow in Pe. The first build provides the application shell,
-project-folder chooser, playlist area and playback controls. File discovery and
-Pe automation are the next milestones described in [DESIGN.md](DESIGN.md).
+slow-scrolling slideshow in Pe. The current build recursively discovers text
+and source files, skips hidden and build-output folders, and fills the playlist
+in a stable folder-first order. Pe automation is the next milestone described
+in [DESIGN.md](DESIGN.md).
 
 ## Building
 

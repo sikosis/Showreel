@@ -1,5 +1,7 @@
 #include "ShowreelWindow.h"
 
+#include "SourceFileDiscovery.h"
+
 #include <Application.h>
 #include <Button.h>
 #include <FilePanel.h>
@@ -9,6 +11,7 @@
 #include <Message.h>
 #include <Path.h>
 #include <ScrollView.h>
+#include <StringItem.h>
 #include <StringView.h>
 
 
@@ -20,18 +23,19 @@ namespace {
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.14", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.15", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
+	fPlaylistView(NULL),
 	fPlayButton(NULL) {
 	BButton* chooseButton = new BButton("Choose project folder" B_UTF8_ELLIPSIS,
 		new BMessage(kChooseProjectFolder));
 	fFolderPathView = new BStringView("folder path", "No project folder selected");
 
-	BListView* playlistView = new BListView("playlist");
+	fPlaylistView = new BListView("playlist");
 	BScrollView* playlistScrollView = new BScrollView("playlist scroll view",
-		playlistView, 0, false, true);
+		fPlaylistView, 0, false, true);
 
 	fPlayButton = new BButton("Play", NULL);
 	fPlayButton->SetEnabled(false);
@@ -108,6 +112,47 @@ void ShowreelWindow::ChooseProjectFolder() {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelWindow::ClearPlaylist() {
+	while (fPlaylistView->CountItems() > 0)
+		delete fPlaylistView->RemoveItem(static_cast<int32>(0));
+
+	fPlaylistPaths.clear();
+	fPlayButton->SetEnabled(false);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::PopulatePlaylist(const char* folderPath) {
+	ClearPlaylist();
+
+	SourceFileDiscovery discovery;
+	status_t status = discovery.Discover(folderPath, fPlaylistPaths);
+	if (status != B_OK) {
+		BString folderLabel(folderPath);
+		folderLabel << " (could not read folder)";
+		fFolderPathView->SetText(folderLabel.String());
+		return;
+	}
+
+	BString rootPrefix(folderPath);
+	if (!rootPrefix.EndsWith("/"))
+		rootPrefix << "/";
+
+	for (const BString& filePath : fPlaylistPaths) {
+		BString displayPath(filePath);
+		if (displayPath.StartsWith(rootPrefix))
+			displayPath.Remove(0, rootPrefix.Length());
+		fPlaylistView->AddItem(new BStringItem(displayPath.String()));
+	}
+
+	BString folderLabel(folderPath);
+	folderLabel << " (" << static_cast<int32>(fPlaylistPaths.size()) << " files)";
+	fFolderPathView->SetText(folderLabel.String());
+	fPlayButton->SetEnabled(!fPlaylistPaths.empty());
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::ProjectFolderChosen(BMessage* message) {
 	entry_ref folderReference;
 	if (message->FindRef("refs", &folderReference) != B_OK)
@@ -117,7 +162,7 @@ void ShowreelWindow::ProjectFolderChosen(BMessage* message) {
 	if (folderPath.InitCheck() != B_OK)
 		return;
 
-	fFolderPathView->SetText(folderPath.Path());
+	PopulatePlaylist(folderPath.Path());
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
