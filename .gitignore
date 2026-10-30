@@ -1,1 +1,4 @@
 update-git.sh
+objects.*
+package-build/
+*.hpkg

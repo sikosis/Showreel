@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.11-f5a623" alt="Version v0.11">
+  <img src="https://img.shields.io/badge/version-v0.12-f5a623" alt="Version v0.12">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -17,8 +17,13 @@ On Haiku with the development tools installed:
 
 ```sh
 make
+make install
+make package
 ```
 
-The build uses Haiku's standard `makefile-engine` and produces the `Showreel`
-application in the repository root. The Tracker and Pe scripting spike in the
-design must also be run on Haiku before playback automation is implemented.
+The build uses Haiku's standard `makefile-engine`. `make install` installs to
+`/boot/home/config/non-packaged/apps` by default; override `INSTALL_DIR` or use
+`DESTDIR` when staging. `make package` creates a versioned `.hpkg` in the
+repository root. `make clean` removes the build, package staging directory and
+generated package. The Tracker and Pe scripting spike in the design must also
+be run on Haiku before playback automation is implemented.

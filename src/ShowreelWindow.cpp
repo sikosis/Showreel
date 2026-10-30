@@ -4,7 +4,7 @@
 #include <Button.h>
 #include <FilePanel.h>
 #include <GroupLayout.h>
-#include <GroupLayoutBuilder.h>
+#include <GroupView.h>
 #include <ListView.h>
 #include <Message.h>
 #include <Path.h>
@@ -20,7 +20,7 @@ namespace {
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.11", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.12", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
@@ -42,22 +42,27 @@ ShowreelWindow::ShowreelWindow()
 	BButton* stopButton = new BButton("Stop", NULL);
 	stopButton->SetEnabled(false);
 
-	BView* controls = BGroupLayoutBuilder(B_VERTICAL, B_USE_DEFAULT_SPACING)
-		.Add(fPlayButton)
-		.Add(previousButton)
-		.Add(nextButton)
-		.Add(stopButton)
-		.AddGlue();
+	BGroupView* controls = new BGroupView(B_VERTICAL, 8.0f);
+	controls->AddChild(fPlayButton);
+	controls->AddChild(previousButton);
+	controls->AddChild(nextButton);
+	controls->AddChild(stopButton);
+
+	BGroupView* folderRow = new BGroupView(B_HORIZONTAL, 8.0f);
+	folderRow->AddChild(chooseButton);
+	folderRow->AddChild(fFolderPathView);
+
+	BGroupView* playlistRow = new BGroupView(B_HORIZONTAL, 8.0f);
+	playlistRow->AddChild(playlistScrollView);
+	playlistRow->AddChild(controls);
+
+	BGroupView* contentView = new BGroupView(B_VERTICAL, 8.0f);
+	contentView->GroupLayout()->SetInsets(10.0f, 10.0f, 10.0f, 10.0f);
+	contentView->AddChild(folderRow);
+	contentView->AddChild(playlistRow);
 
 	SetLayout(new BGroupLayout(B_VERTICAL));
-	AddChild(BGroupLayoutBuilder(B_VERTICAL, B_USE_WINDOW_SPACING)
-		.SetInsets(B_USE_WINDOW_SPACING)
-		.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_DEFAULT_SPACING)
-			.Add(chooseButton)
-			.Add(fFolderPathView, 1.0f))
-		.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_DEFAULT_SPACING)
-			.Add(playlistScrollView, 1.0f)
-			.Add(controls)));
+	AddChild(contentView);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
