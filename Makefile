@@ -7,13 +7,13 @@ SRCS = \
 	src/ShowreelApplication.cpp \
 	src/ShowreelWindow.cpp
 RDEFS = resources/Showreel.rdef
-LIBS = be tracker
+LIBS = be tracker $(STDCPPLIBS)
 OPTIMIZE := FULL
 WARNINGS = ALL
 CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.15
+VERSION = 0.16
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build
