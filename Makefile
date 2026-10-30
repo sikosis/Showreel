@@ -12,7 +12,7 @@ WARNINGS = ALL
 COMPILER_FLAGS = -std=c++17
 LOCALES =
 
-VERSION = 0.12
+VERSION = 0.13
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build
@@ -21,12 +21,7 @@ PACKAGE_FILE = showreel-$(VERSION)-$(PACKAGE_REVISION)-$(PACKAGE_ARCHITECTURE).h
 
 include /boot/system/develop/etc/makefile-engine
 
-.PHONY: install package package-clean
-
-install: $(TARGET)
-	mkdir -p "$(DESTDIR)$(INSTALL_DIR)"
-	cp -f "$(TARGET)" "$(DESTDIR)$(INSTALL_DIR)/$(NAME)"
-	@if [ -z "$(DESTDIR)" ]; then mimeset -f "$(INSTALL_DIR)/$(NAME)"; fi
+.PHONY: package package-clean
 
 package: $(PACKAGE_FILE)
 
