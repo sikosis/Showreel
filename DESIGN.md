@@ -94,7 +94,8 @@ The main risk is that Pe may not expose every property the loop needs through sc
 - [ ] Build the driver layer with two backends, `hey` and native BMessenger, behind one interface.
 - [ ] Build discovery and the playlist model.
 - [ ] Build the player state machine (idle, opening, scrolling, dwelling, closing).
-- [ ] Build the window and settings.
+- [x] Build the initial native window shell.
+- [ ] Add settings and connect the window to the playlist and player.
 - [ ] Test on a large project, a one-line file, an empty file and a file that needs saving.
 
 **Open questions**
