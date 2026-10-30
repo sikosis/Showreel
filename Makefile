@@ -9,10 +9,10 @@ RDEFS = resources/Showreel.rdef
 LIBS = be tracker
 OPTIMIZE := FULL
 WARNINGS = ALL
-COMPILER_FLAGS = -std=c++17
+CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.13
+VERSION = 0.14
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build
@@ -25,10 +25,12 @@ include /boot/system/develop/etc/makefile-engine
 
 package: $(PACKAGE_FILE)
 
-$(PACKAGE_FILE): $(TARGET) packaging/PackageInfo.in
+$(PACKAGE_FILE): $(TARGET) packaging/PackageInfo.in packaging/Copyrighted
 	rm -rf "$(PACKAGE_BUILD_DIR)"
 	mkdir -p "$(PACKAGE_BUILD_DIR)/apps"
+	mkdir -p "$(PACKAGE_BUILD_DIR)/data/licenses"
 	cp -f "$(TARGET)" "$(PACKAGE_BUILD_DIR)/apps/$(NAME)"
+	cp -f packaging/Copyrighted "$(PACKAGE_BUILD_DIR)/data/licenses/Copyrighted"
 	sed \
 		-e 's/@VERSION@/$(VERSION)/g' \
 		-e 's/@REVISION@/$(PACKAGE_REVISION)/g' \
