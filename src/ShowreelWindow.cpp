@@ -37,15 +37,15 @@ namespace {
 	const uint32 kTimingChanged = 'tmch';
 	const uint32 kShowAbout = 'sabt';
 	const bigtime_t kPlaybackTickInterval = 50000;
-	const int32 kDefaultTopDwellTenths = 15;
+	const int32 kDefaultTopDwellTenths = 50;
 	const int32 kDefaultScrollLinesPerSecond = 8;
-	const int32 kDefaultBottomDwellTenths = 30;
+	const int32 kDefaultBottomDwellTenths = 50;
 }
 
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.36", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.37", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),

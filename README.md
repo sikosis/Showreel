@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.36-f5a623" alt="Version v0.36">
+  <img src="https://img.shields.io/badge/version-v0.37-f5a623" alt="Version v0.37">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -16,7 +16,7 @@ and skipped during playback. Play now opens each viewable file in Globe, dwells
 at the top, fits and centres the Globe window within the screen, scrolls it,
 dwells at the bottom, closes it and advances. Pause, Previous, Next and Stop
 control the active run. Top dwell, scrolling speed and bottom dwell are
-adjustable before playback; their defaults retain the quick debug timing.
+adjustable before playback; the top and bottom dwell defaults are five seconds.
 Globe closes when the playlist finishes, and Showreel can optionally close too.
 
 ## Building
