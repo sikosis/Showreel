@@ -5,11 +5,11 @@
 
 
 class ShowreelApplication : public BApplication {
-public:
-	ShowreelApplication();
+	public:
+		ShowreelApplication();
 
-	void AboutRequested() override;
-	void ReadyToRun() override;
-};
+		void AboutRequested() override;
+		void ReadyToRun() override;
+	};
 
 #endif

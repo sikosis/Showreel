@@ -16,35 +16,6 @@ namespace {
 	const bigtime_t kGlobeStartupSettleDelay = 250000;
 	const int32 kGlobeStartAttempts = 40;
 
-
-	status_t ReadFloatProperty(const BMessenger& target, const char* property, float& value) {
-		BMessage request(B_GET_PROPERTY);
-		request.AddSpecifier(property);
-		BMessage reply;
-		status_t status = target.SendMessage(&request, &reply,
-			kGlobeReplyTimeout, kGlobeReplyTimeout);
-		if (status != B_OK)
-			return status;
-		return reply.FindFloat("result", &value);
-	}
-	//---------------------------------------------------------------------------------------------------------------------------------//
-
-
-	status_t WriteFloatProperty(const BMessenger& target, const char* property, float value) {
-		BMessage request(B_SET_PROPERTY);
-		request.AddFloat("data", value);
-		request.AddSpecifier(property);
-		BMessage reply;
-		status_t status = target.SendMessage(&request, &reply,
-			kGlobeReplyTimeout, kGlobeReplyTimeout);
-		if (status != B_OK)
-			return status;
-
-		int32 replyStatus = B_ERROR;
-		reply.FindInt32("error", &replyStatus);
-		return static_cast<status_t>(replyStatus);
-	}
-	//---------------------------------------------------------------------------------------------------------------------------------//
 }
 
 
@@ -79,23 +50,7 @@ status_t GlobeDriver::GetScrollState(const EditorDocument& document,
 		kGlobeReplyTimeout, kGlobeReplyTimeout);
 	if (status != B_OK)
 		return status;
-
-	status = ReadScrollReply(reply, state);
-	if (status != B_NO_INIT)
-		return status;
-
-	state.ready = false;
-	state.minimum = 0.0f;
-	state.lineHeight = 16.0f;
-	status = ReadFloatProperty(document.target, "ScrollMaximum",
-		state.maximum);
-	if (status != B_OK)
-		return status;
-	status = ReadFloatProperty(document.target, "ScrollPosition", state.value);
-	if (status != B_OK)
-		return status;
-	state.ready = true;
-	return B_OK;
+	return ReadScrollReply(reply, state);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -153,6 +108,15 @@ status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+status_t GlobeDriver::QuitEditor() {
+	BMessenger globe(kGlobeSignature);
+	if (!globe.IsValid())
+		return B_OK;
+	return globe.SendMessage(B_QUIT_REQUESTED);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 status_t GlobeDriver::ReadScrollReply(const BMessage& reply, EditorScrollState& state) const {
 	int32 replyStatus = B_ERROR;
 	reply.FindInt32("status", &replyStatus);
@@ -187,15 +151,7 @@ status_t GlobeDriver::SetScrollValue(const EditorDocument& document, float value
 		kGlobeReplyTimeout, kGlobeReplyTimeout);
 	if (status != B_OK)
 		return status;
-
-	status = ReadScrollReply(reply, state);
-	if (status != B_NO_INIT)
-		return status;
-
-	status = WriteFloatProperty(document.target, "ScrollPosition", value);
-	if (status != B_OK)
-		return status;
-	return GetScrollState(document, state);
+	return ReadScrollReply(reply, state);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

@@ -7,6 +7,7 @@
 #include <Alert.h>
 #include <Application.h>
 #include <Button.h>
+#include <CheckBox.h>
 #include <FilePanel.h>
 #include <GroupLayout.h>
 #include <GroupView.h>
@@ -44,7 +45,7 @@ namespace {
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.33", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.36", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
@@ -54,6 +55,7 @@ ShowreelWindow::ShowreelWindow()
 	fPreviousButton(NULL),
 	fNextButton(NULL),
 	fStopButton(NULL),
+	fCloseShowreelCheckBox(NULL),
 	fTopDwellSlider(NULL),
 	fScrollSpeedSlider(NULL),
 	fBottomDwellSlider(NULL),
@@ -93,6 +95,8 @@ ShowreelWindow::ShowreelWindow()
 	fBottomDwellSlider = new BSlider("bottom dwell", "",
 		new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
+	fCloseShowreelCheckBox = new BCheckBox("close showreel",
+		"Close Showreel when finished", NULL);
 	UpdateTimingLabels();
 
 	BGroupView* controls = new BGroupView(B_VERTICAL, 8.0f);
@@ -100,6 +104,7 @@ ShowreelWindow::ShowreelWindow()
 	controls->AddChild(fTopDwellSlider);
 	controls->AddChild(fScrollSpeedSlider);
 	controls->AddChild(fBottomDwellSlider);
+	controls->AddChild(fCloseShowreelCheckBox);
 	controls->AddChild(fPlayButton);
 	controls->AddChild(fPauseButton);
 	controls->AddChild(fPreviousButton);
@@ -188,7 +193,7 @@ void ShowreelWindow::AdvanceToFile(int32 direction) {
 
 	int32 nextIndex = FindViewableFile(fCurrentIndex + direction, direction);
 	if (nextIndex < 0) {
-		StopPlayback();
+		FinishPlayback();
 		return;
 	}
 
@@ -248,6 +253,15 @@ int32 ShowreelWindow::FindViewableFile(int32 startIndex, int32 direction) const 
 	}
 
 	return -1;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::FinishPlayback() {
+	StopPlayback();
+	fEditorDriver->QuitEditor();
+	if (fCloseShowreelCheckBox->Value() == B_CONTROL_ON)
+		PostMessage(B_QUIT_REQUESTED);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

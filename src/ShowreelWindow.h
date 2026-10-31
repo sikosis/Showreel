@@ -12,6 +12,7 @@
 
 
 class BButton;
+class BCheckBox;
 class BFilePanel;
 class BListView;
 class BMessageRunner;
@@ -40,6 +41,7 @@ private:
 	void CloseCurrentDocument();
 	void ClearPlaylist();
 	int32 FindViewableFile(int32 startIndex, int32 direction) const;
+	void FinishPlayback();
 	void HandlePlaybackError(const char* operation, status_t status);
 	void OpenSelectedFile();
 	void PausePlayback();
@@ -62,6 +64,7 @@ private:
 	BButton* fPreviousButton;
 	BButton* fNextButton;
 	BButton* fStopButton;
+	BCheckBox* fCloseShowreelCheckBox;
 	BSlider* fTopDwellSlider;
 	BSlider* fScrollSpeedSlider;
 	BSlider* fBottomDwellSlider;
