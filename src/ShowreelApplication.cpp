@@ -5,6 +5,7 @@
 #include <Alert.h>
 #include <AppFileInfo.h>
 #include <File.h>
+#include <Roster.h>
 #include <String.h>
 
 
