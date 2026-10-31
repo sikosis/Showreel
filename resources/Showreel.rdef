@@ -3,9 +3,9 @@ resource app_signature "application/x-vnd.Sikosis-Showreel";
 resource app_version {
 	major = 0,
 	middle = 2,
-	minor = 0,
+	minor = 3,
 	variety = B_APPV_DEVELOPMENT,
 	internal = 0,
-	short_info = "Showreel v0.2",
-	long_info = "Showreel v0.2 - play source code like a slideshow"
+	short_info = "Showreel v0.23",
+	long_info = "Showreel v0.23 - play source code like a slideshow"
 };

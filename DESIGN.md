@@ -49,7 +49,7 @@ The player never talks to Tracker or Globe directly; it asks the driver layer, w
 
 ## Key behaviours
 
-**File discovery.** Recurse from the chosen folder, skip hidden entries, `.git`, build output and binaries. Include a file if its MIME type starts with `text/` or its extension is in an editable list (`.cpp`, `.h`, `.c`, `.py`, `.rdef`, `.md`, `Jamfile`, `Makefile` and similar). Default order is folders first, then name; the user can drag rows in the playlist to reorder.
+**File discovery.** Recurse from the chosen folder, skip hidden entries, `.git`, build output and binaries. Include a file if its MIME type starts with `text/` or its extension is in an editable source list (`.cpp`, `.h`, `.c`, `.rdef`, `.html`, `.js`, `Jamfile`, `Makefile` and similar). Markdown and project-automation scripts remain visible in a disabled style but playback skips them. Default order is folders first, then resource definitions, headers, C/C++ implementations and the remaining files by name; the user can drag rows in the playlist to reorder.
 
 **Slow scrolling.** The scroller computes the document's scrollable range once, then advances on a timer, for example every 50 ms. Speed is set in lines per second, so long files take longer and short files finish quickly. A file that fits in one window skips scrolling and just dwells.
 

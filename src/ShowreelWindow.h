@@ -3,6 +3,8 @@
 
 #include <Window.h>
 
+#include "SourceFileDiscovery.h"
+
 #include <String.h>
 
 #include <vector>
@@ -35,7 +37,7 @@ private:
 	BListView* fPlaylistView;
 	BButton* fPlayButton;
 	EditorDriver* fEditorDriver;
-	std::vector<BString> fPlaylistPaths;
+	std::vector<DiscoveredFile> fPlaylistFiles;
 };
 
 #endif

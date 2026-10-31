@@ -19,8 +19,18 @@ namespace {
 	};
 
 
-	bool IsResourceDefinition(const BString& name) {
-		return name.IEndsWith(".rdef");
+	int32 FilePriority(const BString& name) {
+		if (name.IEndsWith(".rdef"))
+			return 0;
+		if (name.IEndsWith(".h") || name.IEndsWith(".hh")
+			|| name.IEndsWith(".hpp")) {
+			return 1;
+		}
+		if (name.IEndsWith(".c") || name.IEndsWith(".cc")
+			|| name.IEndsWith(".cpp") || name.IEndsWith(".cxx")) {
+			return 2;
+		}
+		return 3;
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -29,10 +39,10 @@ namespace {
 		if (left.isDirectory != right.isDirectory)
 			return left.isDirectory;
 		if (!left.isDirectory) {
-			bool leftIsResource = IsResourceDefinition(left.name);
-			bool rightIsResource = IsResourceDefinition(right.name);
-			if (leftIsResource != rightIsResource)
-				return leftIsResource;
+			int32 leftPriority = FilePriority(left.name);
+			int32 rightPriority = FilePriority(right.name);
+			if (leftPriority != rightPriority)
+				return leftPriority < rightPriority;
 		}
 
 		return left.name.ICompare(right.name) < 0;
@@ -42,18 +52,18 @@ namespace {
 
 
 status_t SourceFileDiscovery::Discover(const char* folderPath,
-	std::vector<BString>& filePaths) const {
-	filePaths.clear();
+	std::vector<DiscoveredFile>& files) const {
+	files.clear();
 	if (folderPath == NULL || folderPath[0] == '\0')
 		return B_BAD_VALUE;
 
-	return DiscoverDirectory(folderPath, filePaths);
+	return DiscoverDirectory(folderPath, files);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
 status_t SourceFileDiscovery::DiscoverDirectory(const char* folderPath,
-	std::vector<BString>& filePaths) const {
+	std::vector<DiscoveredFile>& files) const {
 	BDirectory directory(folderPath);
 	status_t status = directory.InitCheck();
 	if (status != B_OK)
@@ -81,9 +91,12 @@ status_t SourceFileDiscovery::DiscoverDirectory(const char* folderPath,
 	for (const DirectoryEntry& candidate : entries) {
 		if (candidate.isDirectory) {
 			if (!IsExcludedDirectory(candidate.name.String()))
-				DiscoverDirectory(candidate.path.String(), filePaths);
+				DiscoverDirectory(candidate.path.String(), files);
 		} else if (IsSourceFile(candidate.path.String(), candidate.name.String())) {
-			filePaths.push_back(candidate.path);
+			DiscoveredFile file;
+			file.path = candidate.path;
+			file.skipped = ShouldSkipFile(candidate.name.String());
+			files.push_back(file);
 		}
 	}
 
@@ -108,6 +121,8 @@ bool SourceFileDiscovery::IsExcludedDirectory(const char* name) const {
 
 
 bool SourceFileDiscovery::IsSourceFile(const char* path, const char* name) const {
+	BString fileName(name);
+	fileName.ToLower();
 	BNode node(path);
 	if (node.InitCheck() == B_OK) {
 		BNodeInfo nodeInfo(&node);
@@ -118,8 +133,6 @@ bool SourceFileDiscovery::IsSourceFile(const char* path, const char* name) const
 		}
 	}
 
-	BString fileName(name);
-	fileName.ToLower();
 	if (fileName == "jamfile" || fileName == "makefile")
 		return true;
 
@@ -128,13 +141,32 @@ bool SourceFileDiscovery::IsSourceFile(const char* path, const char* name) const
 		return false;
 
 	static const char* const extensions[] = {
-		".c", ".cc", ".cpp", ".css", ".cxx", ".h", ".hh", ".hpp",
-		".html", ".java", ".js", ".json", ".md", ".py", ".rdef",
-		".recipe", ".sh", ".ts", ".txt", ".xml", ".yaml", ".yml"
+		".bash", ".c", ".cc", ".command", ".cpp", ".css", ".cxx",
+		".fish", ".h", ".hh", ".hpp", ".html", ".java", ".js",
+		".json", ".markdown", ".md", ".pl", ".py", ".rb", ".rdef",
+		".recipe", ".sh", ".ts", ".txt", ".xml", ".yaml", ".yml",
+		".zsh"
 	};
 
 	for (const char* sourceExtension : extensions) {
 		if (std::strcmp(extension, sourceExtension) == 0)
+			return true;
+	}
+
+	return false;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+bool SourceFileDiscovery::ShouldSkipFile(const char* name) const {
+	BString fileName(name);
+	fileName.ToLower();
+	static const char* const skippedExtensions[] = {
+		".bash", ".command", ".fish", ".md", ".markdown", ".pl", ".py",
+		".rb", ".sh", ".zsh"
+	};
+	for (const char* skippedExtension : skippedExtensions) {
+		if (fileName.EndsWith(skippedExtension))
 			return true;
 	}
 
