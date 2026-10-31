@@ -43,7 +43,7 @@ namespace {
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "Showreel v0.39", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.39", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
