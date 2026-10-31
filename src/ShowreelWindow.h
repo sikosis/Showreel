@@ -12,6 +12,7 @@ class BButton;
 class BFilePanel;
 class BListView;
 class BStringView;
+class EditorDriver;
 
 
 class ShowreelWindow : public BWindow {
@@ -25,6 +26,7 @@ public:
 private:
 	void ChooseProjectFolder();
 	void ClearPlaylist();
+	void OpenSelectedFile();
 	void PopulatePlaylist(const char* folderPath);
 	void ProjectFolderChosen(BMessage* message);
 
@@ -32,6 +34,7 @@ private:
 	BStringView* fFolderPathView;
 	BListView* fPlaylistView;
 	BButton* fPlayButton;
+	EditorDriver* fEditorDriver;
 	std::vector<BString> fPlaylistPaths;
 };
 

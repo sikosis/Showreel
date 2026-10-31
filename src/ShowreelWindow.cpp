@@ -1,7 +1,10 @@
 #include "ShowreelWindow.h"
 
+#include "EditorDriver.h"
+#include "GlobeDriver.h"
 #include "SourceFileDiscovery.h"
 
+#include <Alert.h>
 #include <Application.h>
 #include <Button.h>
 #include <FilePanel.h>
@@ -14,21 +17,25 @@
 #include <StringItem.h>
 #include <StringView.h>
 
+#include <cstring>
+
 
 namespace {
 	const uint32 kChooseProjectFolder = 'chpf';
 	const uint32 kProjectFolderChosen = 'pfch';
+	const uint32 kOpenSelectedFile = 'opsf';
 }
 
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.16", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.18", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
-	fPlayButton(NULL) {
+	fPlayButton(NULL),
+	fEditorDriver(new GlobeDriver()) {
 	BButton* chooseButton = new BButton("Choose project folder" B_UTF8_ELLIPSIS,
 		new BMessage(kChooseProjectFolder));
 	fFolderPathView = new BStringView("folder path", "No project folder selected");
@@ -37,7 +44,7 @@ ShowreelWindow::ShowreelWindow()
 	BScrollView* playlistScrollView = new BScrollView("playlist scroll view",
 		fPlaylistView, 0, false, true);
 
-	fPlayButton = new BButton("Play", NULL);
+	fPlayButton = new BButton("Play", new BMessage(kOpenSelectedFile));
 	fPlayButton->SetEnabled(false);
 	BButton* previousButton = new BButton("Previous", NULL);
 	previousButton->SetEnabled(false);
@@ -73,6 +80,7 @@ ShowreelWindow::ShowreelWindow()
 
 ShowreelWindow::~ShowreelWindow() {
 	delete fFolderPanel;
+	delete fEditorDriver;
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -84,6 +92,9 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 			break;
 		case kProjectFolderChosen:
 			ProjectFolderChosen(message);
+			break;
+		case kOpenSelectedFile:
+			OpenSelectedFile();
 			break;
 		default:
 			BWindow::MessageReceived(message);
@@ -118,6 +129,30 @@ void ShowreelWindow::ClearPlaylist() {
 
 	fPlaylistPaths.clear();
 	fPlayButton->SetEnabled(false);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::OpenSelectedFile() {
+	int32 selectedIndex = fPlaylistView->CurrentSelection();
+	if (selectedIndex < 0 && !fPlaylistPaths.empty()) {
+		selectedIndex = 0;
+		fPlaylistView->Select(selectedIndex);
+	}
+
+	if (selectedIndex < 0
+		|| selectedIndex >= static_cast<int32>(fPlaylistPaths.size())) {
+		return;
+	}
+
+	status_t status = fEditorDriver->OpenDocument(
+		fPlaylistPaths[selectedIndex].String());
+	if (status != B_OK) {
+		BString message("Globe could not open the selected file: ");
+		message << strerror(status);
+		(new BAlert("Open failed", message.String(), "OK", NULL, NULL,
+			B_WIDTH_AS_USUAL, B_STOP_ALERT))->Go();
+	}
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

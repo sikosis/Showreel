@@ -4,20 +4,20 @@ Oct 30, 2026 · @Sikosis
 
 ## Overview
 
-Showreel is a small Haiku app that plays a project's source code like a slideshow: it opens each text or source file in Pe, scrolls it slowly top to bottom, pauses at the end, closes it and moves to the next. It is meant for demos, screen recordings and kiosk-style display of an app's code.
+Showreel is a small Haiku app that plays a project's source code like a slideshow: it opens each text or source file in Globe, scrolls it slowly top to bottom, pauses at the end, closes it and moves to the next. It is meant for demos, screen recordings and kiosk-style display of an app's code.
 
-The automation runs on Haiku's scripting system. `hey` (or the same BMessages sent natively) asks Tracker to show the project folder, then drives Pe window by window.
+The automation runs on Haiku's messaging and scripting systems. Tracker shows the project folder, while Globe provides the document and scrolling surface. Showreel sends native BMessages where possible and keeps `hey` useful for testing the public scripting contract.
 
 **Goals**
 
 - Point it at a folder, press Play, and it walks every source file with no further input.
 - Smooth, readable scrolling at a pace the user sets.
-- Pause, skip, previous and stop at any time without leaving stray Pe windows behind.
+- Pause, skip, previous and stop at any time without leaving stray Globe windows behind.
 
 **Non-goals (v1)**
 
 - Editing files, syntax-theme management or recording video; screen recording is left to other tools.
-- Driving editors other than Pe, though the driver layer keeps that possible later.
+- Supporting editors other than Globe in v1, though the driver layer keeps that possible later.
 
 ## How it works
 
@@ -25,19 +25,19 @@ Each showcase run is one setup step followed by a loop that repeats once per fil
 
 1. **Show the project.** Ask Tracker to open the chosen folder so the audience sees the file layout first.
 2. **Build the playlist.** Walk the folder, keep text and source files, and sort them in a fixed order.
-3. **Open a file.** Hand the file's path to Pe, which opens it in a new window (or the running Pe instance).
-4. **Find the window.** Use `hey` to list Pe's windows and match the new one by title.
+3. **Open a file.** Send the file reference to Globe through its application signature.
+4. **Identify the document.** Use Globe's automation API to obtain a stable document identifier for the Showreel-owned window.
 5. **Scroll slowly.** Move the text view down in small timed steps until the end.
 6. **Dwell.** Wait at the bottom for a set time so the last lines can be read.
-7. **Close and advance.** Ask the Pe window to quit, then go back to step 3 with the next file.
+7. **Close and advance.** Ask Globe to close that document, then go back to step 3 with the next file.
 
 | Step | Intended mechanism | Confidence |
 | --- | --- | --- |
 | Show folder in Tracker | `hey Tracker` scripting, or `open <folder>` as a fallback | Needs a spike on a Haiku machine |
-| Open file in Pe | Pass the path to Pe (`Pe <file>`) or send it a refs-received message | High |
-| Find new window | `hey Pe` GET on Window titles, compared with the file name | Medium |
-| Scroll | Set the vertical scroll bar's value through `hey`, or send mouse-wheel messages natively | Medium; native fallback likely needed |
-| Close window | `hey` quit on the window, or a native quit-requested message | Medium |
+| Open file in Globe | Send a refs-received message to `application/x-vnd.hGlobe` | Implemented |
+| Identify new document | Globe returns a stable document/session identifier | Needs Globe API |
+| Scroll | Set or advance the document's exposed scroll position | Needs Globe API |
+| Close window | Close the identified Showreel-owned Globe document | Needs Globe API |
 
 I have not run these against a live Haiku install, so the exact property names are the first thing to confirm (see the build plan).
 
@@ -45,7 +45,7 @@ I have not run these against a live Haiku install, so the exact property names a
 
 &#91;embedded content: architecture · 5 components, 2 external apps\]
 
-The player never talks to Tracker or Pe directly; it asks the driver layer, which can use `hey` or native messages, so a backend can be swapped if a property turns out not to be scriptable.
+The player never talks to Tracker or Globe directly; it asks the driver layer, which uses native messages and the public scripting contract so a backend can be swapped later.
 
 ## Key behaviours
 
@@ -55,13 +55,13 @@ The player never talks to Tracker or Pe directly; it asks the driver layer, whic
 
 **Dwell at the bottom.** When the scroll bar reaches its maximum, the app waits for the configured dwell time (default 3 s), then closes the window. A short dwell at the top (default 1.5 s) lets the first lines register before scrolling starts.
 
-**Closing safely.** The app only closes windows it opened, matched by title and the window's creation order. If Pe shows an unsaved-changes prompt, the app stops, tells the user, and does not force-quit.
+**Closing safely.** The app only closes Globe documents opened with its session identifier. Showreel requests read-only presentation mode, so its documents cannot become modified and do not produce save prompts.
 
 **Controls.** Pause freezes the timer; Next and Previous close the current window and jump; Stop closes the window and returns to the playlist. A loop option restarts from the first file after the last.
 
 ## UI and settings
 
-One small native window (Haiku Interface Kit) with a playlist on the left and the controls on the right. It stays out of the way so Pe fills the screen.
+One small native window (Haiku Interface Kit) with a playlist on the left and the controls on the right. It stays out of the way so Globe fills the screen.
 
 | Setting | Default | Range | Purpose |
 | --- | --- | --- | --- |
@@ -71,26 +71,26 @@ One small native window (Haiku Interface Kit) with a playlist on the left and th
 | Dwell at bottom (s) | 3 | 0 to 30 | Pause on the last lines |
 | File filter | text and source | editable list | Which files join the playlist |
 | Loop | off | on or off | Restart after the last file |
-| Pe window | maximised | maximised or as is | Whether to resize Pe for the show |
+| Globe window | maximised | maximised or as is | Whether to resize Globe for the show |
 
 Settings are saved with `BMessage` flattening to the user's settings directory. A per-file row shows its state (queued, playing, done, skipped) so the user can see where the run is.
 
 ## Risks and build plan
 
-The main risk is that Pe may not expose every property the loop needs through scripting, so the first task is a spike that proves each step by hand.
+The main integration task is defining a small, stable Globe automation contract for document ownership and scrolling.
 
 | Risk | Effect | Fallback |
 | --- | --- | --- |
-| Pe has no scriptable scroll position | Cannot scroll through `hey` | Send mouse-wheel messages natively to the text view |
-| Window title does not match the file name | Wrong window closed | Match by window index before and after opening, and by path |
+| Globe automation API is not yet available | Cannot complete playback | Add the document/session and scrolling properties to Globe |
+| Document identity is not stable | Wrong window closed | Require an opaque identifier returned when Showreel opens a document |
 | Unsaved-changes prompt on close | Run stalls | Detect the prompt, stop and warn; open files read-only where possible |
-| Pe already has other windows open | Closing the wrong window | Only touch windows created during the run |
+| Globe already has other windows open | Closing the wrong window | Only touch documents carrying Showreel's session identifier |
 | `hey` call latency | Choppy scrolling | Send scroll messages natively; keep `hey` for open, find and close |
 
 **Build plan**
 
-- [ ] Spike: on a Haiku machine, dump Tracker's and Pe's scripting suites with `hey` and write down which properties exist.
-- [ ] Prove the loop by hand in a shell script: open a file, list windows, scroll, close.
+- [ ] Add and document Globe's read-only document/session and scrolling API.
+- [ ] Prove the Globe loop by hand: open a file, identify it, scroll and close it.
 - [ ] Build the driver layer with two backends, `hey` and native BMessenger, behind one interface.
 - [x] Build discovery and populate the playlist model.
 - [ ] Build the player state machine (idle, opening, scrolling, dwelling, closing).
@@ -100,5 +100,5 @@ The main risk is that Pe may not expose every property the loop needs through sc
 
 **Open questions**
 
-- Should Showreel also drive a second editor (for example StyledEdit) in later versions?
-- Should it hide Pe's chrome for cleaner recordings, or leave Pe untouched?
+- Should Showreel also drive a second editor (for example Pe) in later versions?
+- Should Globe's presentation mode hide its chrome for cleaner recordings?
