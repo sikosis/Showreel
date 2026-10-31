@@ -65,6 +65,7 @@ private:
 	BButton* fNextButton;
 	BButton* fStopButton;
 	BCheckBox* fCloseShowreelCheckBox;
+	BStringView* fPlaybackStatusView;
 	BSlider* fTopDwellSlider;
 	BSlider* fScrollSpeedSlider;
 	BSlider* fBottomDwellSlider;

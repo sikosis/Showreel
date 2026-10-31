@@ -45,7 +45,7 @@ namespace {
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.37", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.38", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
@@ -56,6 +56,7 @@ ShowreelWindow::ShowreelWindow()
 	fNextButton(NULL),
 	fStopButton(NULL),
 	fCloseShowreelCheckBox(NULL),
+	fPlaybackStatusView(NULL),
 	fTopDwellSlider(NULL),
 	fScrollSpeedSlider(NULL),
 	fBottomDwellSlider(NULL),
@@ -97,10 +98,12 @@ ShowreelWindow::ShowreelWindow()
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
 	fCloseShowreelCheckBox = new BCheckBox("close showreel",
 		"Close Showreel when finished", NULL);
+	fPlaybackStatusView = new BStringView("playback status", "Ready");
 	UpdateTimingLabels();
 
 	BGroupView* controls = new BGroupView(B_VERTICAL, 8.0f);
 	controls->AddChild(new BStringView("timing heading", "Timing"));
+	controls->AddChild(fPlaybackStatusView);
 	controls->AddChild(fTopDwellSlider);
 	controls->AddChild(fScrollSpeedSlider);
 	controls->AddChild(fBottomDwellSlider);
@@ -303,9 +306,11 @@ void ShowreelWindow::PausePlayback() {
 	if (fPaused) {
 		fStateDeadline += now - fPauseStarted;
 		fPaused = false;
+		fPlaybackStatusView->SetText("Resuming");
 	} else {
 		fPauseStarted = now;
 		fPaused = true;
+		fPlaybackStatusView->SetText("Paused");
 	}
 	UpdatePlaybackControls();
 }
@@ -318,8 +323,13 @@ void ShowreelWindow::PlaybackTick() {
 
 	bigtime_t now = system_time();
 	if (fPlayerState == PlayerState::TopDwell) {
-		if (now < fStateDeadline)
+		if (now < fStateDeadline) {
+			BString status;
+			status.SetToFormat("Waiting at top: %.1f s",
+				static_cast<double>(fStateDeadline - now) / 1000000.0);
+			fPlaybackStatusView->SetText(status.String());
 			return;
+		}
 
 		EditorScrollState state;
 		status_t status = fEditorDriver->GetScrollState(fCurrentDocument, state);
@@ -332,6 +342,8 @@ void ShowreelWindow::PlaybackTick() {
 		if (state.maximum <= state.minimum) {
 			fPlayerState = PlayerState::BottomDwell;
 			fStateDeadline = now + BottomDwell();
+			fPlaybackStatusView->SetText(
+				"File fits in Globe; no scrolling needed");
 		} else
 			fPlayerState = PlayerState::Scrolling;
 		return;
@@ -355,9 +367,15 @@ void ShowreelWindow::PlaybackTick() {
 			HandlePlaybackError("Could not scroll the Globe document", status);
 			return;
 		}
+		BString playbackStatus;
+		playbackStatus.SetToFormat("Scrolling: %.0f / %.0f px",
+			static_cast<double>(state.value),
+			static_cast<double>(state.maximum));
+		fPlaybackStatusView->SetText(playbackStatus.String());
 		if (state.value >= state.maximum - 0.5f) {
 			fPlayerState = PlayerState::BottomDwell;
 			fStateDeadline = now + BottomDwell();
+			fPlaybackStatusView->SetText("Waiting at bottom");
 		}
 		return;
 	}
@@ -448,6 +466,7 @@ void ShowreelWindow::StartFile(int32 index) {
 	fPlayerState = PlayerState::TopDwell;
 	fStateDeadline = system_time() + TopDwell();
 	fPaused = false;
+	fPlaybackStatusView->SetText("Waiting at top");
 
 	if (fPlaybackRunner == NULL) {
 		BMessage tickMessage(kPlaybackTick);
@@ -466,6 +485,7 @@ void ShowreelWindow::StopPlayback() {
 	fPlayerState = PlayerState::Idle;
 	fCurrentIndex = -1;
 	fPaused = false;
+	fPlaybackStatusView->SetText("Ready");
 	UpdatePlaybackControls();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
