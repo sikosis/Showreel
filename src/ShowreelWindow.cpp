@@ -44,7 +44,7 @@ namespace {
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.29", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.3", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
@@ -309,8 +309,6 @@ void ShowreelWindow::PlaybackTick() {
 
 		EditorScrollState state;
 		status_t status = fEditorDriver->GetScrollState(fCurrentDocument, state);
-		if (status == B_NO_INIT)
-			return;
 		if (status != B_OK) {
 			HandlePlaybackError("Could not read Globe's scroll state", status);
 			return;
