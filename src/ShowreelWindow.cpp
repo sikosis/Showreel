@@ -84,17 +84,13 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 25, 730, 470), "Showreel v0.
 	fNextButton->SetEnabled(false);
 	fStopButton->SetEnabled(false);
 	BButton* aboutButton = new BButton("About", new BMessage(kShowAbout));
-	fTopDwellSlider = new BSlider("top dwell", "",
-		new BMessage(kTimingChanged), 0, 100, B_HORIZONTAL);
+	fTopDwellSlider = new BSlider("top dwell", "", new BMessage(kTimingChanged), 0, 100, B_HORIZONTAL);
 	fTopDwellSlider->SetValue(kDefaultTopDwellTenths);
-	fScrollSpeedSlider = new BSlider("scroll speed", "",
-		new BMessage(kTimingChanged), 2, 40, B_HORIZONTAL);
+	fScrollSpeedSlider = new BSlider("scroll speed", "", new BMessage(kTimingChanged), 2, 40, B_HORIZONTAL);
 	fScrollSpeedSlider->SetValue(kDefaultScrollLinesPerSecond);
-	fBottomDwellSlider = new BSlider("bottom dwell", "",
-		new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
+	fBottomDwellSlider = new BSlider("bottom dwell", "", new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
-	fCloseShowreelCheckBox = new BCheckBox("close showreel",
-		"Close Showreel when finished", NULL);
+	fCloseShowreelCheckBox = new BCheckBox("close showreel", "Close Showreel when finished", NULL);
 	fPlaybackStatusView = new BStringView("playback status", "Ready");
 	UpdateTimingLabels();
 
@@ -245,9 +241,7 @@ int32 ShowreelWindow::FindViewableFile(int32 startIndex, int32 direction) const 
 	if (direction == 0)
 		return -1;
 
-	for (int32 index = startIndex;
-		index >= 0 && index < static_cast<int32>(fPlaylistFiles.size());
-		index += direction) {
+	for (int32 index = startIndex; index >= 0 && index < static_cast<int32>(fPlaylistFiles.size()); index += direction) {
 		if (!fPlaylistFiles[index].skipped)
 			return index;
 	}
@@ -271,8 +265,7 @@ void ShowreelWindow::HandlePlaybackError(const char* operation,
 	StopPlayback();
 	BString message(operation);
 	message << ": " << strerror(status);
-	(new BAlert("Playback stopped", message.String(), "OK", NULL, NULL,
-		B_WIDTH_AS_USUAL, B_STOP_ALERT))->Go();
+	(new BAlert("Playback stopped", message.String(), "OK", NULL, NULL,	B_WIDTH_AS_USUAL, B_STOP_ALERT))->Go();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -322,8 +315,7 @@ void ShowreelWindow::PlaybackTick() {
 	if (fPlayerState == PlayerState::TopDwell) {
 		if (now < fStateDeadline) {
 			BString status;
-			status.SetToFormat("Waiting at top: %.1f s",
-				static_cast<double>(fStateDeadline - now) / 1000000.0);
+			status.SetToFormat("Waiting at top: %.1f s", static_cast<double>(fStateDeadline - now) / 1000000.0);
 			fPlaybackStatusView->SetText(status.String());
 			return;
 		}
@@ -355,19 +347,15 @@ void ShowreelWindow::PlaybackTick() {
 		}
 
 		float lineHeight = state.lineHeight > 0.0f ? state.lineHeight : 16.0f;
-		float step = ScrollLinesPerSecond() * lineHeight
-			* static_cast<float>(kPlaybackTickInterval) / 1000000.0f;
+		float step = ScrollLinesPerSecond() * lineHeight * static_cast<float>(kPlaybackTickInterval) / 1000000.0f;
 		float nextValue = std::min(state.value + step, state.maximum);
-		status = fEditorDriver->SetScrollValue(fCurrentDocument, nextValue,
-			state);
+		status = fEditorDriver->SetScrollValue(fCurrentDocument, nextValue,	state);
 		if (status != B_OK) {
 			HandlePlaybackError("Could not scroll the Globe document", status);
 			return;
 		}
 		BString playbackStatus;
-		playbackStatus.SetToFormat("Scrolling: %.0f / %.0f px",
-			static_cast<double>(state.value),
-			static_cast<double>(state.maximum));
+		playbackStatus.SetToFormat("Scrolling: %.0f / %.0f px",	static_cast<double>(state.value), static_cast<double>(state.maximum));
 		fPlaybackStatusView->SetText(playbackStatus.String());
 		if (state.value >= state.maximum - 0.5f) {
 			fPlayerState = PlayerState::BottomDwell;
@@ -444,8 +432,7 @@ float ShowreelWindow::ScrollLinesPerSecond() const {
 
 
 void ShowreelWindow::StartFile(int32 index) {
-	if (index < 0 || index >= static_cast<int32>(fPlaylistFiles.size())
-		|| fPlaylistFiles[index].skipped) {
+	if (index < 0 || index >= static_cast<int32>(fPlaylistFiles.size())	|| fPlaylistFiles[index].skipped) {
 		return;
 	}
 
@@ -499,10 +486,8 @@ void ShowreelWindow::UpdatePlaybackControls() {
 	bool hasViewableFile = FindViewableFile(0, 1) >= 0;
 	fPlayButton->SetEnabled(!playing && hasViewableFile);
 	fPauseButton->SetEnabled(playing);
-	fPreviousButton->SetEnabled(playing
-		&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);
-	fNextButton->SetEnabled(playing
-		&& FindViewableFile(fCurrentIndex + 1, 1) >= 0);
+	fPreviousButton->SetEnabled(playing	&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);
+	fNextButton->SetEnabled(playing	&& FindViewableFile(fCurrentIndex + 1, 1) >= 0);
 	fStopButton->SetEnabled(playing);
 	fPauseButton->SetLabel(fPaused ? "Resume" : "Pause");
 	fTopDwellSlider->SetEnabled(!playing);
@@ -514,14 +499,11 @@ void ShowreelWindow::UpdatePlaybackControls() {
 
 void ShowreelWindow::UpdateTimingLabels() {
 	BString label;
-	label.SetToFormat("Top dwell: %.1f s",
-		static_cast<double>(fTopDwellSlider->Value()) / 10.0);
+	label.SetToFormat("Top dwell: %.1f s", static_cast<double>(fTopDwellSlider->Value()) / 10.0);
 	fTopDwellSlider->SetLabel(label.String());
-	label.SetToFormat("Scroll speed: %ld lines/s",
-		static_cast<long>(fScrollSpeedSlider->Value()));
+	label.SetToFormat("Scroll speed: %ld lines/s", static_cast<long>(fScrollSpeedSlider->Value()));
 	fScrollSpeedSlider->SetLabel(label.String());
-	label.SetToFormat("Bottom dwell: %.1f s",
-		static_cast<double>(fBottomDwellSlider->Value()) / 10.0);
+	label.SetToFormat("Bottom dwell: %.1f s", static_cast<double>(fBottomDwellSlider->Value()) / 10.0);
 	fBottomDwellSlider->SetLabel(label.String());
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
