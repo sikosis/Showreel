@@ -15,6 +15,7 @@ class BButton;
 class BFilePanel;
 class BListView;
 class BMessageRunner;
+class BSlider;
 class BStringView;
 
 
@@ -47,7 +48,11 @@ private:
 	void ProjectFolderChosen(BMessage* message);
 	void StartFile(int32 index);
 	void StopPlayback();
+	bigtime_t BottomDwell() const;
+	float ScrollLinesPerSecond() const;
+	bigtime_t TopDwell() const;
 	void UpdatePlaybackControls();
+	void UpdateTimingLabels();
 
 	BFilePanel* fFolderPanel;
 	BStringView* fFolderPathView;
@@ -57,6 +62,9 @@ private:
 	BButton* fPreviousButton;
 	BButton* fNextButton;
 	BButton* fStopButton;
+	BSlider* fTopDwellSlider;
+	BSlider* fScrollSpeedSlider;
+	BSlider* fBottomDwellSlider;
 	EditorDriver* fEditorDriver;
 	BMessageRunner* fPlaybackRunner;
 	EditorDocument fCurrentDocument;

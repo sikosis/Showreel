@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.26-f5a623" alt="Version v0.26">
+  <img src="https://img.shields.io/badge/version-v0.29-f5a623" alt="Version v0.29">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -13,8 +13,10 @@ in a stable folder-first order. Resource definition (`.rdef`) files are treated
 as primary project files, followed by header files and then C/C++ implementation
 files. Markdown and project-automation scripts remain visible but are greyed out
 and skipped during playback. Play now opens each viewable file in Globe, dwells
-at the top, scrolls it, dwells at the bottom, closes it and advances. Pause,
-Previous, Next and Stop control the active run.
+at the top, fits and centres the Globe window within the screen, scrolls it,
+dwells at the bottom, closes it and advances. Pause, Previous, Next and Stop
+control the active run. Top dwell, scrolling speed and bottom dwell are
+adjustable before playback; their defaults retain the quick debug timing.
 
 ## Building
 

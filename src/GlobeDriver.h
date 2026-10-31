@@ -18,6 +18,7 @@ public:
 		float value, EditorScrollState& state) override;
 
 private:
+	status_t FitDocumentToScreen(const EditorDocument& document) const;
 	status_t ReadScrollReply(const BMessage& reply,
 		EditorScrollState& state) const;
 };
