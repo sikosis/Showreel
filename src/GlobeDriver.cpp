@@ -17,8 +17,7 @@ namespace {
 	const int32 kGlobeStartAttempts = 40;
 
 
-	status_t ReadFloatProperty(const BMessenger& target, const char* property,
-		float& value) {
+	status_t ReadFloatProperty(const BMessenger& target, const char* property, float& value) {
 		BMessage request(B_GET_PROPERTY);
 		request.AddSpecifier(property);
 		BMessage reply;
@@ -31,8 +30,7 @@ namespace {
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
 
-	status_t WriteFloatProperty(const BMessenger& target, const char* property,
-		float value) {
+	status_t WriteFloatProperty(const BMessenger& target, const char* property, float value) {
 		BMessage request(B_SET_PROPERTY);
 		request.AddFloat("data", value);
 		request.AddSpecifier(property);
@@ -102,8 +100,7 @@ status_t GlobeDriver::GetScrollState(const EditorDocument& document,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
-status_t GlobeDriver::OpenDocument(const char* path,
-	EditorDocument& document) {
+status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 	document.session = 0;
 	document.target = BMessenger();
 	if (path == NULL || path[0] == '\0')
@@ -156,8 +153,7 @@ status_t GlobeDriver::OpenDocument(const char* path,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
-status_t GlobeDriver::ReadScrollReply(const BMessage& reply,
-	EditorScrollState& state) const {
+status_t GlobeDriver::ReadScrollReply(const BMessage& reply, EditorScrollState& state) const {
 	int32 replyStatus = B_ERROR;
 	reply.FindInt32("status", &replyStatus);
 	status_t status = static_cast<status_t>(replyStatus);
@@ -179,8 +175,7 @@ status_t GlobeDriver::ReadScrollReply(const BMessage& reply,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
-status_t GlobeDriver::SetScrollValue(const EditorDocument& document,
-	float value, EditorScrollState& state) {
+status_t GlobeDriver::SetScrollValue(const EditorDocument& document, float value, EditorScrollState& state) {
 	if (!document.target.IsValid() || document.session == 0)
 		return B_BAD_VALUE;
 
