@@ -19,9 +19,21 @@ namespace {
 	};
 
 
+	bool IsResourceDefinition(const BString& name) {
+		return name.IEndsWith(".rdef");
+	}
+	//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 	bool CompareEntries(const DirectoryEntry& left, const DirectoryEntry& right) {
 		if (left.isDirectory != right.isDirectory)
 			return left.isDirectory;
+		if (!left.isDirectory) {
+			bool leftIsResource = IsResourceDefinition(left.name);
+			bool rightIsResource = IsResourceDefinition(right.name);
+			if (leftIsResource != rightIsResource)
+				return leftIsResource;
+		}
 
 		return left.name.ICompare(right.name) < 0;
 	}

@@ -24,12 +24,13 @@ namespace {
 	const uint32 kChooseProjectFolder = 'chpf';
 	const uint32 kProjectFolderChosen = 'pfch';
 	const uint32 kOpenSelectedFile = 'opsf';
+	const uint32 kShowAbout = 'sabt';
 }
 
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.18", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.2", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
@@ -52,12 +53,14 @@ ShowreelWindow::ShowreelWindow()
 	nextButton->SetEnabled(false);
 	BButton* stopButton = new BButton("Stop", NULL);
 	stopButton->SetEnabled(false);
+	BButton* aboutButton = new BButton("About", new BMessage(kShowAbout));
 
 	BGroupView* controls = new BGroupView(B_VERTICAL, 8.0f);
 	controls->AddChild(fPlayButton);
 	controls->AddChild(previousButton);
 	controls->AddChild(nextButton);
 	controls->AddChild(stopButton);
+	controls->AddChild(aboutButton);
 
 	BGroupView* folderRow = new BGroupView(B_HORIZONTAL, 8.0f);
 	folderRow->AddChild(chooseButton);
@@ -95,6 +98,9 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 			break;
 		case kOpenSelectedFile:
 			OpenSelectedFile();
+			break;
+		case kShowAbout:
+			be_app->AboutRequested();
 			break;
 		default:
 			BWindow::MessageReceived(message);

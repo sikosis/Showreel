@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.18-f5a623" alt="Version v0.18">
+  <img src="https://img.shields.io/badge/version-v0.2-f5a623" alt="Version v0.2">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -9,8 +9,10 @@
 Showreel is a native Haiku app for presenting a project's source files as a
 slow-scrolling slideshow in Globe. The current build recursively discovers text
 and source files, skips hidden and build-output folders, and fills the playlist
-in a stable folder-first order. Play opens the selected file in Globe; automated
-scrolling is the next milestone described in [DESIGN.md](DESIGN.md).
+in a stable folder-first order. Resource definition (`.rdef`) files are treated
+as primary project files and appear before ordinary files in their folder. Play
+opens the selected file in Globe; automated scrolling is the next milestone
+described in [DESIGN.md](DESIGN.md).
 
 ## Building
 

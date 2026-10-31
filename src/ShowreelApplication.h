@@ -8,6 +8,7 @@ class ShowreelApplication : public BApplication {
 public:
 	ShowreelApplication();
 
+	void AboutRequested() override;
 	void ReadyToRun() override;
 };
 
