@@ -11,7 +11,9 @@
 namespace {
 	const char* const kGlobeSignature = "application/x-vnd.hGlobe";
 	const bigtime_t kGlobeReplyTimeout = 5000000;
+	const bigtime_t kGlobeOpenReplyTimeout = 15000000;
 	const bigtime_t kGlobeStartDelay = 50000;
+	const bigtime_t kGlobeStartupSettleDelay = 250000;
 	const int32 kGlobeStartAttempts = 40;
 
 
@@ -115,6 +117,7 @@ status_t GlobeDriver::OpenDocument(const char* path,
 	status = be_roster->Launch(kGlobeSignature);
 	if (status != B_OK && status != B_ALREADY_RUNNING)
 		return status;
+	bool launchedGlobe = status == B_OK;
 
 	BMessenger globe;
 	for (int32 attempt = 0; attempt < kGlobeStartAttempts; ++attempt) {
@@ -125,12 +128,14 @@ status_t GlobeDriver::OpenDocument(const char* path,
 	}
 	if (!globe.IsValid())
 		return B_TIMED_OUT;
+	if (launchedGlobe)
+		snooze(kGlobeStartupSettleDelay);
 
 	BMessage request(kMessageGlobeAutomationOpen);
 	request.AddRef("refs", &documentReference);
 	BMessage reply;
 	status = globe.SendMessage(&request, &reply, kGlobeReplyTimeout,
-		kGlobeReplyTimeout);
+		kGlobeOpenReplyTimeout);
 	if (status != B_OK)
 		return status;
 
