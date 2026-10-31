@@ -6,9 +6,6 @@
 #include <Message.h>
 #include <OS.h>
 #include <Roster.h>
-#include <Screen.h>
-
-#include <algorithm>
 
 
 namespace {
@@ -16,7 +13,6 @@ namespace {
 	const bigtime_t kGlobeReplyTimeout = 5000000;
 	const bigtime_t kGlobeStartDelay = 50000;
 	const int32 kGlobeStartAttempts = 40;
-	const float kScreenMargin = 24.0f;
 
 
 	status_t ReadFloatProperty(const BMessenger& target, const char* property,
@@ -104,54 +100,6 @@ status_t GlobeDriver::GetScrollState(const EditorDocument& document,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
-status_t GlobeDriver::FitDocumentToScreen(
-	const EditorDocument& document) const {
-	if (!document.target.IsValid())
-		return B_BAD_VALUE;
-
-	BMessage frameRequest(B_GET_PROPERTY);
-	frameRequest.AddSpecifier("Frame");
-	BMessage frameReply;
-	status_t status = document.target.SendMessage(&frameRequest, &frameReply,
-		kGlobeReplyTimeout, kGlobeReplyTimeout);
-	if (status != B_OK)
-		return status;
-
-	BRect windowFrame;
-	status = frameReply.FindRect("result", &windowFrame);
-	if (status != B_OK)
-		return status;
-
-	BScreen screen(B_MAIN_SCREEN_ID);
-	if (!screen.IsValid())
-		return B_NO_INIT;
-
-	BRect availableFrame = screen.Frame();
-	availableFrame.InsetBy(kScreenMargin, kScreenMargin);
-	float width = std::min(windowFrame.Width(), availableFrame.Width());
-	float height = std::min(windowFrame.Height(), availableFrame.Height());
-	float left = availableFrame.left
-		+ (availableFrame.Width() - width) / 2.0f;
-	float top = availableFrame.top
-		+ (availableFrame.Height() - height) / 2.0f;
-	BRect fittedFrame(left, top, left + width, top + height);
-
-	BMessage setFrameRequest(B_SET_PROPERTY);
-	setFrameRequest.AddRect("data", fittedFrame);
-	setFrameRequest.AddSpecifier("Frame");
-	BMessage setFrameReply;
-	status = document.target.SendMessage(&setFrameRequest, &setFrameReply,
-		kGlobeReplyTimeout, kGlobeReplyTimeout);
-	if (status != B_OK)
-		return status;
-
-	int32 replyStatus = B_ERROR;
-	setFrameReply.FindInt32("error", &replyStatus);
-	return static_cast<status_t>(replyStatus);
-}
-//---------------------------------------------------------------------------------------------------------------------------------//
-
-
 status_t GlobeDriver::OpenDocument(const char* path,
 	EditorDocument& document) {
 	document.session = 0;
@@ -198,15 +146,7 @@ status_t GlobeDriver::OpenDocument(const char* path,
 	status = reply.FindMessenger("target", &document.target);
 	if (status != B_OK)
 		return status;
-
-	status = FitDocumentToScreen(document);
-	if (status == B_OK)
-		return B_OK;
-
-	CloseDocument(document);
-	document.session = 0;
-	document.target = BMessenger();
-	return status;
+	return B_OK;
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
