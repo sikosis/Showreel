@@ -12,31 +12,54 @@
 #include <GroupView.h>
 #include <ListView.h>
 #include <Message.h>
+#include <MessageRunner.h>
+#include <OS.h>
 #include <Path.h>
 #include <ScrollView.h>
 #include <StringItem.h>
 #include <StringView.h>
 
 #include <cstring>
+#include <algorithm>
 
 
 namespace {
 	const uint32 kChooseProjectFolder = 'chpf';
 	const uint32 kProjectFolderChosen = 'pfch';
 	const uint32 kOpenSelectedFile = 'opsf';
+	const uint32 kPausePlayback = 'pasp';
+	const uint32 kPreviousFile = 'prvf';
+	const uint32 kNextFile = 'nxtf';
+	const uint32 kStopPlayback = 'stpp';
+	const uint32 kPlaybackTick = 'ptck';
 	const uint32 kShowAbout = 'sabt';
+	const bigtime_t kPlaybackTickInterval = 50000;
+	const bigtime_t kTopDwell = 1500000;
+	const bigtime_t kBottomDwell = 3000000;
+	const float kScrollLinesPerSecond = 8.0f;
 }
 
 
 ShowreelWindow::ShowreelWindow()
 	:
-	BWindow(BRect(100, 100, 820, 560), "Showreel v0.25", B_TITLED_WINDOW,
+	BWindow(BRect(100, 100, 820, 560), "Showreel v0.26", B_TITLED_WINDOW,
 		B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
 	fPlayButton(NULL),
-	fEditorDriver(new GlobeDriver()) {
+	fPauseButton(NULL),
+	fPreviousButton(NULL),
+	fNextButton(NULL),
+	fStopButton(NULL),
+	fEditorDriver(new GlobeDriver()),
+	fPlaybackRunner(NULL),
+	fPlayerState(PlayerState::Idle),
+	fStateDeadline(0),
+	fPauseStarted(0),
+	fCurrentIndex(-1),
+	fPaused(false) {
+	fCurrentDocument.session = 0;
 	BButton* chooseButton = new BButton("Choose project folder" B_UTF8_ELLIPSIS,
 		new BMessage(kChooseProjectFolder));
 	fFolderPathView = new BStringView("folder path", "No project folder selected");
@@ -47,19 +70,22 @@ ShowreelWindow::ShowreelWindow()
 
 	fPlayButton = new BButton("Play", new BMessage(kOpenSelectedFile));
 	fPlayButton->SetEnabled(false);
-	BButton* previousButton = new BButton("Previous", NULL);
-	previousButton->SetEnabled(false);
-	BButton* nextButton = new BButton("Next", NULL);
-	nextButton->SetEnabled(false);
-	BButton* stopButton = new BButton("Stop", NULL);
-	stopButton->SetEnabled(false);
+	fPauseButton = new BButton("Pause", new BMessage(kPausePlayback));
+	fPreviousButton = new BButton("Previous", new BMessage(kPreviousFile));
+	fNextButton = new BButton("Next", new BMessage(kNextFile));
+	fStopButton = new BButton("Stop", new BMessage(kStopPlayback));
+	fPauseButton->SetEnabled(false);
+	fPreviousButton->SetEnabled(false);
+	fNextButton->SetEnabled(false);
+	fStopButton->SetEnabled(false);
 	BButton* aboutButton = new BButton("About", new BMessage(kShowAbout));
 
 	BGroupView* controls = new BGroupView(B_VERTICAL, 8.0f);
 	controls->AddChild(fPlayButton);
-	controls->AddChild(previousButton);
-	controls->AddChild(nextButton);
-	controls->AddChild(stopButton);
+	controls->AddChild(fPauseButton);
+	controls->AddChild(fPreviousButton);
+	controls->AddChild(fNextButton);
+	controls->AddChild(fStopButton);
 	controls->AddChild(aboutButton);
 
 	BGroupView* folderRow = new BGroupView(B_HORIZONTAL, 8.0f);
@@ -82,6 +108,7 @@ ShowreelWindow::ShowreelWindow()
 
 
 ShowreelWindow::~ShowreelWindow() {
+	StopPlayback();
 	delete fFolderPanel;
 	delete fEditorDriver;
 }
@@ -99,6 +126,21 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 		case kOpenSelectedFile:
 			OpenSelectedFile();
 			break;
+		case kPausePlayback:
+			PausePlayback();
+			break;
+		case kPreviousFile:
+			AdvanceToFile(-1);
+			break;
+		case kNextFile:
+			AdvanceToFile(1);
+			break;
+		case kStopPlayback:
+			StopPlayback();
+			break;
+		case kPlaybackTick:
+			PlaybackTick();
+			break;
 		case kShowAbout:
 			be_app->AboutRequested();
 			break;
@@ -111,8 +153,24 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 
 
 bool ShowreelWindow::QuitRequested() {
+	StopPlayback();
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	return true;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::AdvanceToFile(int32 direction) {
+	if (fPlayerState == PlayerState::Idle)
+		return;
+
+	int32 nextIndex = FindViewableFile(fCurrentIndex + direction, direction);
+	if (nextIndex < 0) {
+		StopPlayback();
+		return;
+	}
+
+	StartFile(nextIndex);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -129,7 +187,18 @@ void ShowreelWindow::ChooseProjectFolder() {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelWindow::CloseCurrentDocument() {
+	if (fCurrentDocument.session != 0)
+		fEditorDriver->CloseDocument(fCurrentDocument);
+
+	fCurrentDocument.session = 0;
+	fCurrentDocument.target = BMessenger();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::ClearPlaylist() {
+	StopPlayback();
 	while (fPlaylistView->CountItems() > 0)
 		delete fPlaylistView->RemoveItem(static_cast<int32>(0));
 
@@ -139,20 +208,39 @@ void ShowreelWindow::ClearPlaylist() {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+int32 ShowreelWindow::FindViewableFile(int32 startIndex, int32 direction) const {
+	if (direction == 0)
+		return -1;
+
+	for (int32 index = startIndex;
+		index >= 0 && index < static_cast<int32>(fPlaylistFiles.size());
+		index += direction) {
+		if (!fPlaylistFiles[index].skipped)
+			return index;
+	}
+
+	return -1;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::HandlePlaybackError(const char* operation,
+	status_t status) {
+	StopPlayback();
+	BString message(operation);
+	message << ": " << strerror(status);
+	(new BAlert("Playback stopped", message.String(), "OK", NULL, NULL,
+		B_WIDTH_AS_USUAL, B_STOP_ALERT))->Go();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::OpenSelectedFile() {
 	int32 selectedIndex = fPlaylistView->CurrentSelection();
 	if (selectedIndex < 0
 		|| selectedIndex >= static_cast<int32>(fPlaylistFiles.size())
 		|| fPlaylistFiles[selectedIndex].skipped) {
-		selectedIndex = -1;
-		for (int32 index = 0;
-			index < static_cast<int32>(fPlaylistFiles.size()); ++index) {
-			if (!fPlaylistFiles[index].skipped) {
-				selectedIndex = index;
-				fPlaylistView->Select(selectedIndex);
-				break;
-			}
-		}
+		selectedIndex = FindViewableFile(0, 1);
 	}
 
 	if (selectedIndex < 0
@@ -160,14 +248,82 @@ void ShowreelWindow::OpenSelectedFile() {
 		return;
 	}
 
-	status_t status = fEditorDriver->OpenDocument(
-		fPlaylistFiles[selectedIndex].path.String());
-	if (status != B_OK) {
-		BString message("Globe could not open the selected file: ");
-		message << strerror(status);
-		(new BAlert("Open failed", message.String(), "OK", NULL, NULL,
-			B_WIDTH_AS_USUAL, B_STOP_ALERT))->Go();
+	StartFile(selectedIndex);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::PausePlayback() {
+	if (fPlayerState == PlayerState::Idle)
+		return;
+
+	bigtime_t now = system_time();
+	if (fPaused) {
+		fStateDeadline += now - fPauseStarted;
+		fPaused = false;
+	} else {
+		fPauseStarted = now;
+		fPaused = true;
 	}
+	UpdatePlaybackControls();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::PlaybackTick() {
+	if (fPlayerState == PlayerState::Idle || fPaused)
+		return;
+
+	bigtime_t now = system_time();
+	if (fPlayerState == PlayerState::TopDwell) {
+		if (now < fStateDeadline)
+			return;
+
+		EditorScrollState state;
+		status_t status = fEditorDriver->GetScrollState(fCurrentDocument, state);
+		if (status == B_NO_INIT)
+			return;
+		if (status != B_OK) {
+			HandlePlaybackError("Could not read Globe's scroll state", status);
+			return;
+		}
+		if (!state.ready)
+			return;
+		if (state.maximum <= state.minimum) {
+			fPlayerState = PlayerState::BottomDwell;
+			fStateDeadline = now + kBottomDwell;
+		} else
+			fPlayerState = PlayerState::Scrolling;
+		return;
+	}
+
+	if (fPlayerState == PlayerState::Scrolling) {
+		EditorScrollState state;
+		status_t status = fEditorDriver->GetScrollState(fCurrentDocument, state);
+		if (status != B_OK) {
+			HandlePlaybackError("Could not read Globe's scroll state", status);
+			return;
+		}
+
+		float lineHeight = state.lineHeight > 0.0f ? state.lineHeight : 16.0f;
+		float step = kScrollLinesPerSecond * lineHeight
+			* static_cast<float>(kPlaybackTickInterval) / 1000000.0f;
+		float nextValue = std::min(state.value + step, state.maximum);
+		status = fEditorDriver->SetScrollValue(fCurrentDocument, nextValue,
+			state);
+		if (status != B_OK) {
+			HandlePlaybackError("Could not scroll the Globe document", status);
+			return;
+		}
+		if (state.value >= state.maximum - 0.5f) {
+			fPlayerState = PlayerState::BottomDwell;
+			fStateDeadline = now + kBottomDwell;
+		}
+		return;
+	}
+
+	if (fPlayerState == PlayerState::BottomDwell && now >= fStateDeadline)
+		AdvanceToFile(1);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -222,6 +378,64 @@ void ShowreelWindow::ProjectFolderChosen(BMessage* message) {
 		return;
 
 	PopulatePlaylist(folderPath.Path());
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::StartFile(int32 index) {
+	if (index < 0 || index >= static_cast<int32>(fPlaylistFiles.size())
+		|| fPlaylistFiles[index].skipped) {
+		return;
+	}
+
+	CloseCurrentDocument();
+	status_t status = fEditorDriver->OpenDocument(
+		fPlaylistFiles[index].path.String(), fCurrentDocument);
+	if (status != B_OK) {
+		HandlePlaybackError("Globe could not open the selected file", status);
+		return;
+	}
+
+	fCurrentIndex = index;
+	fPlaylistView->Select(index);
+	fPlaylistView->ScrollToSelection();
+	fPlayerState = PlayerState::TopDwell;
+	fStateDeadline = system_time() + kTopDwell;
+	fPaused = false;
+
+	if (fPlaybackRunner == NULL) {
+		BMessage tickMessage(kPlaybackTick);
+		fPlaybackRunner = new BMessageRunner(BMessenger(this), &tickMessage,
+			kPlaybackTickInterval);
+	}
+	UpdatePlaybackControls();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::StopPlayback() {
+	delete fPlaybackRunner;
+	fPlaybackRunner = NULL;
+	CloseCurrentDocument();
+	fPlayerState = PlayerState::Idle;
+	fCurrentIndex = -1;
+	fPaused = false;
+	UpdatePlaybackControls();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::UpdatePlaybackControls() {
+	bool playing = fPlayerState != PlayerState::Idle;
+	bool hasViewableFile = FindViewableFile(0, 1) >= 0;
+	fPlayButton->SetEnabled(!playing && hasViewableFile);
+	fPauseButton->SetEnabled(playing);
+	fPreviousButton->SetEnabled(playing
+		&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);
+	fNextButton->SetEnabled(playing
+		&& FindViewableFile(fCurrentIndex + 1, 1) >= 0);
+	fStopButton->SetEnabled(playing);
+	fPauseButton->SetLabel(fPaused ? "Resume" : "Pause");
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

@@ -93,7 +93,7 @@ The main integration task is defining a small, stable Globe automation contract 
 - [ ] Prove the Globe loop by hand: open a file, identify it, scroll and close it.
 - [ ] Build the driver layer with two backends, `hey` and native BMessenger, behind one interface.
 - [x] Build discovery and populate the playlist model.
-- [ ] Build the player state machine (idle, opening, scrolling, dwelling, closing).
+- [x] Build the player state machine (idle, scrolling, dwelling and advancing).
 - [x] Build the initial native window shell.
 - [ ] Add settings and connect the window to the playlist and player.
 - [ ] Test on a large project, a one-line file, an empty file and a file that needs saving.

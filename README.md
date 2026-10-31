@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.25-f5a623" alt="Version v0.25">
+  <img src="https://img.shields.io/badge/version-v0.26-f5a623" alt="Version v0.26">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -12,8 +12,9 @@ and source files, skips hidden and build-output folders, and fills the playlist
 in a stable folder-first order. Resource definition (`.rdef`) files are treated
 as primary project files, followed by header files and then C/C++ implementation
 files. Markdown and project-automation scripts remain visible but are greyed out
-and skipped during playback. Play opens the selected viewable file in Globe;
-automated scrolling is the next milestone described in [DESIGN.md](DESIGN.md).
+and skipped during playback. Play now opens each viewable file in Globe, dwells
+at the top, scrolls it, dwells at the bottom, closes it and advances. Pause,
+Previous, Next and Stop control the active run.
 
 ## Building
 

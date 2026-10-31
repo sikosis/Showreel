@@ -3,6 +3,7 @@
 
 #include <Window.h>
 
+#include "EditorDriver.h"
 #include "SourceFileDiscovery.h"
 
 #include <String.h>
@@ -13,8 +14,8 @@
 class BButton;
 class BFilePanel;
 class BListView;
+class BMessageRunner;
 class BStringView;
-class EditorDriver;
 
 
 class ShowreelWindow : public BWindow {
@@ -26,17 +27,44 @@ public:
 	bool QuitRequested() override;
 
 private:
+	enum class PlayerState {
+		Idle,
+		TopDwell,
+		Scrolling,
+		BottomDwell
+	};
+
+	void AdvanceToFile(int32 direction);
 	void ChooseProjectFolder();
+	void CloseCurrentDocument();
 	void ClearPlaylist();
+	int32 FindViewableFile(int32 startIndex, int32 direction) const;
+	void HandlePlaybackError(const char* operation, status_t status);
 	void OpenSelectedFile();
+	void PausePlayback();
+	void PlaybackTick();
 	void PopulatePlaylist(const char* folderPath);
 	void ProjectFolderChosen(BMessage* message);
+	void StartFile(int32 index);
+	void StopPlayback();
+	void UpdatePlaybackControls();
 
 	BFilePanel* fFolderPanel;
 	BStringView* fFolderPathView;
 	BListView* fPlaylistView;
 	BButton* fPlayButton;
+	BButton* fPauseButton;
+	BButton* fPreviousButton;
+	BButton* fNextButton;
+	BButton* fStopButton;
 	EditorDriver* fEditorDriver;
+	BMessageRunner* fPlaybackRunner;
+	EditorDocument fCurrentDocument;
+	PlayerState fPlayerState;
+	bigtime_t fStateDeadline;
+	bigtime_t fPauseStarted;
+	int32 fCurrentIndex;
+	bool fPaused;
 	std::vector<DiscoveredFile> fPlaylistFiles;
 };
 
