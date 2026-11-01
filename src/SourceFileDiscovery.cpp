@@ -22,12 +22,10 @@ namespace {
 	int32 FilePriority(const BString& name) {
 		if (name.IEndsWith(".rdef"))
 			return 0;
-		if (name.IEndsWith(".h") || name.IEndsWith(".hh")
-			|| name.IEndsWith(".hpp")) {
+		if (name.IEndsWith(".h") || name.IEndsWith(".hh") || name.IEndsWith(".hpp")) {
 			return 1;
 		}
-		if (name.IEndsWith(".c") || name.IEndsWith(".cc")
-			|| name.IEndsWith(".cpp") || name.IEndsWith(".cxx")) {
+		if (name.IEndsWith(".c") || name.IEndsWith(".cc") || name.IEndsWith(".cpp") || name.IEndsWith(".cxx")) {
 			return 2;
 		}
 		return 3;
@@ -108,14 +106,8 @@ status_t SourceFileDiscovery::DiscoverDirectory(const char* folderPath,
 bool SourceFileDiscovery::IsExcludedDirectory(const char* name) const {
 	BString directoryName(name);
 	directoryName.ToLower();
-	return directoryName == ".git"
-		|| directoryName == "bin"
-		|| directoryName == "build"
-		|| directoryName == "dist"
-		|| directoryName == "obj"
-		|| directoryName == "out"
-		|| directoryName == "package-build"
-		|| directoryName.StartsWith("objects.");
+	return directoryName == ".git" || directoryName == "bin" || directoryName == "build" || directoryName == "dist"
+		|| directoryName == "obj" || directoryName == "out" || directoryName == "package-build"	|| directoryName.StartsWith("objects.");
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -127,8 +119,7 @@ bool SourceFileDiscovery::IsSourceFile(const char* path, const char* name) const
 	if (node.InitCheck() == B_OK) {
 		BNodeInfo nodeInfo(&node);
 		char mimeType[B_MIME_TYPE_LENGTH];
-		if (nodeInfo.GetType(mimeType) == B_OK
-			&& std::strncmp(mimeType, "text/", 5) == 0) {
+		if (nodeInfo.GetType(mimeType) == B_OK && std::strncmp(mimeType, "text/", 5) == 0) {
 			return true;
 		}
 	}

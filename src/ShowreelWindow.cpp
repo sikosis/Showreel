@@ -64,9 +64,9 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fCurrentIndex(-1),
 	fPaused(false) {
 	fCurrentDocument.session = 0;
-	BButton* chooseButton = new BButton("Choose project folder" B_UTF8_ELLIPSIS,
+	BButton* chooseButton = new BButton("Choose Project Folder" B_UTF8_ELLIPSIS,
 		new BMessage(kChooseProjectFolder));
-	fFolderPathView = new BStringView("folder path", "No project folder selected");
+	fFolderPathView = new BStringView("folder path", "No Project Folder Selected");
 
 	fPlaylistView = new BListView("playlist");
 	BScrollView* playlistScrollView = new BScrollView("playlist scroll view",
@@ -89,7 +89,7 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fScrollSpeedSlider->SetValue(kDefaultScrollLinesPerSecond);
 	fBottomDwellSlider = new BSlider("bottom dwell", "", new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
-	fCloseShowreelCheckBox = new BCheckBox("close showreel", "Close Showreel when finished", NULL);
+	fCloseShowreelCheckBox = new BCheckBox("close showreel", "Close ShowReel when Finished", NULL);
 	fPlaybackStatusView = new BStringView("playback status", "Ready");
 	UpdateTimingLabels();
 
@@ -190,8 +190,7 @@ bool ShowreelWindow::QuitRequested() {
 
 
 void ShowreelWindow::SetCloseWhenFinished(bool closeWhenFinished) {
-	fCloseShowreelCheckBox->SetValue(closeWhenFinished
-		? B_CONTROL_ON : B_CONTROL_OFF);
+	fCloseShowreelCheckBox->SetValue(closeWhenFinished ? B_CONTROL_ON : B_CONTROL_OFF);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -207,11 +206,9 @@ void ShowreelWindow::SetProjectFolder(const char* folderPath) {
 
 void ShowreelWindow::SetTiming(float topDwellSeconds,
 	int32 scrollLinesPerSecond, float bottomDwellSeconds) {
-	fTopDwellSlider->SetValue(static_cast<int32>(topDwellSeconds * 10.0f
-		+ 0.5f));
+	fTopDwellSlider->SetValue(static_cast<int32>(topDwellSeconds * 10.0f + 0.5f));
 	fScrollSpeedSlider->SetValue(scrollLinesPerSecond);
-	fBottomDwellSlider->SetValue(static_cast<int32>(bottomDwellSeconds * 10.0f
-		+ 0.5f));
+	fBottomDwellSlider->SetValue(static_cast<int32>(bottomDwellSeconds * 10.0f + 0.5f));
 	UpdateTimingLabels();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
@@ -241,8 +238,7 @@ bigtime_t ShowreelWindow::BottomDwell() const {
 void ShowreelWindow::ChooseProjectFolder() {
 	if (fFolderPanel == NULL) {
 		BMessenger target(this);
-		fFolderPanel = new BFilePanel(B_OPEN_PANEL, &target, NULL,
-			B_DIRECTORY_NODE, false, new BMessage(kProjectFolderChosen));
+		fFolderPanel = new BFilePanel(B_OPEN_PANEL, &target, NULL, B_DIRECTORY_NODE, false, new BMessage(kProjectFolderChosen));
 	}
 
 	fFolderPanel->Show();
@@ -306,14 +302,11 @@ void ShowreelWindow::HandlePlaybackError(const char* operation,
 
 void ShowreelWindow::OpenSelectedFile() {
 	int32 selectedIndex = fPlaylistView->CurrentSelection();
-	if (selectedIndex < 0
-		|| selectedIndex >= static_cast<int32>(fPlaylistFiles.size())
-		|| fPlaylistFiles[selectedIndex].skipped) {
+	if (selectedIndex < 0 || selectedIndex >= static_cast<int32>(fPlaylistFiles.size())	|| fPlaylistFiles[selectedIndex].skipped) {
 		selectedIndex = FindViewableFile(0, 1);
 	}
 
-	if (selectedIndex < 0
-		|| selectedIndex >= static_cast<int32>(fPlaylistFiles.size())) {
+	if (selectedIndex < 0 || selectedIndex >= static_cast<int32>(fPlaylistFiles.size())) {
 		return;
 	}
 

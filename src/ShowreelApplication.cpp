@@ -14,17 +14,13 @@
 #include <String.h>
 
 
-ShowreelApplication::ShowreelApplication(const ShowreelOptions& options)
-	:
-	BApplication("application/x-vnd.Sikosis-Showreel"),
-	fOptions(options),
-	fWindow(NULL) {
+ShowreelApplication::ShowreelApplication(const ShowreelOptions& options) : BApplication("application/x-vnd.ShowReel"), fOptions(options), fWindow(NULL) {
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
 void ShowreelApplication::AboutRequested() {
-	BString information("Showreel");
+	BString information("ShowReel");
 	BBitmap* applicationIcon = NULL;
 
 	app_info applicationInformation;
@@ -32,24 +28,19 @@ void ShowreelApplication::AboutRequested() {
 		BFile applicationFile(&applicationInformation.ref, B_READ_ONLY);
 		BAppFileInfo fileInformation(&applicationFile);
 		version_info versionInformation;
-		if (applicationFile.InitCheck() == B_OK
-			&& fileInformation.InitCheck() == B_OK
-			&& fileInformation.GetVersionInfo(&versionInformation,
-				B_APP_VERSION_KIND) == B_OK) {
+		if (applicationFile.InitCheck() == B_OK	&& fileInformation.InitCheck() == B_OK && fileInformation.GetVersionInfo(&versionInformation, B_APP_VERSION_KIND) == B_OK) {
 			information = versionInformation.long_info;
 		}
 
 		applicationIcon = new BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
-		if (!applicationIcon->IsValid()
-			|| fileInformation.GetIcon(applicationIcon, B_LARGE_ICON) != B_OK) {
+		if (!applicationIcon->IsValid() || fileInformation.GetIcon(applicationIcon, B_LARGE_ICON) != B_OK) {
 			delete applicationIcon;
 			applicationIcon = NULL;
 		}
 	}
 
 	information << "\n\nApplication signature: " << Signature();
-	BAlert* alert = new BAlert("About Showreel", information.String(), "OK",
-		NULL, NULL, B_WIDTH_AS_USUAL, B_INFO_ALERT);
+	BAlert* alert = new BAlert("About Showreel", information.String(), "OK", NULL, NULL, B_WIDTH_AS_USUAL, B_INFO_ALERT);
 	if (applicationIcon != NULL)
 		alert->SetIcon(applicationIcon);
 	alert->Go();
@@ -73,8 +64,7 @@ void ShowreelApplication::RefsReceived(BMessage* message) {
 
 void ShowreelApplication::ReadyToRun() {
 	fWindow = new ShowreelWindow();
-	fWindow->SetTiming(fOptions.topDwellSeconds,
-		fOptions.scrollLinesPerSecond, fOptions.bottomDwellSeconds);
+	fWindow->SetTiming(fOptions.topDwellSeconds, fOptions.scrollLinesPerSecond, fOptions.bottomDwellSeconds);
 	fWindow->SetCloseWhenFinished(fOptions.closeShowreel);
 	if (!fOptions.projectFolder.IsEmpty())
 		fWindow->SetProjectFolder(fOptions.projectFolder.String());
