@@ -22,11 +22,17 @@ class BStringView;
 
 class ShowreelWindow : public BWindow {
 public:
+	static constexpr uint32 kStartPlayback = 'opsf';
+
 	ShowreelWindow();
 	~ShowreelWindow() override;
 
 	void MessageReceived(BMessage* message) override;
 	bool QuitRequested() override;
+	void SetCloseWhenFinished(bool closeWhenFinished);
+	void SetProjectFolder(const char* folderPath);
+	void SetTiming(float topDwellSeconds, int32 scrollLinesPerSecond,
+		float bottomDwellSeconds);
 
 private:
 	enum class PlayerState {

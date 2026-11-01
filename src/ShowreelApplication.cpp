@@ -10,9 +10,10 @@
 #include <String.h>
 
 
-ShowreelApplication::ShowreelApplication()
+ShowreelApplication::ShowreelApplication(const ShowreelOptions& options)
 	:
-	BApplication("application/x-vnd.Sikosis-Showreel") {
+	BApplication("application/x-vnd.Sikosis-Showreel"),
+	fOptions(options) {
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -53,7 +54,14 @@ void ShowreelApplication::AboutRequested() {
 
 void ShowreelApplication::ReadyToRun() {
 	ShowreelWindow* window = new ShowreelWindow();
+	window->SetTiming(fOptions.topDwellSeconds,
+		fOptions.scrollLinesPerSecond, fOptions.bottomDwellSeconds);
+	window->SetCloseWhenFinished(fOptions.closeShowreel);
+	if (!fOptions.projectFolder.IsEmpty())
+		window->SetProjectFolder(fOptions.projectFolder.String());
 	window->Show();
+	if (fOptions.play)
+		window->PostMessage(ShowreelWindow::kStartPlayback);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

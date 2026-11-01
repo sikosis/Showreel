@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.39-f5a623" alt="Version v0.39">
+  <img src="https://img.shields.io/badge/version-v0.41-f5a623" alt="Version v0.41">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -20,6 +20,19 @@ adjustable before playback; the top and bottom dwell defaults are five seconds.
 The playback status reports dwell countdowns, scroll progress, and files that
 fit without scrolling. Globe closes when the playlist finishes, and Showreel
 can optionally close too. Showreel opens near the top-left of the screen.
+
+## Command-line automation
+
+Every playback setting can be supplied when launching Showreel. A project may
+be given positionally or with `--project`:
+
+```sh
+Showreel --play --top-dwell 5 --scroll-speed 8 --bottom-dwell 5 \
+	--close /boot/home/projects/showreel
+```
+
+Run `Showreel --help` for the accepted ranges and all options. Without command-
+line arguments, Showreel retains the same interactive defaults.
 
 ## Building
 

@@ -28,7 +28,6 @@
 namespace {
 	const uint32 kChooseProjectFolder = 'chpf';
 	const uint32 kProjectFolderChosen = 'pfch';
-	const uint32 kOpenSelectedFile = 'opsf';
 	const uint32 kPausePlayback = 'pasp';
 	const uint32 kPreviousFile = 'prvf';
 	const uint32 kNextFile = 'nxtf';
@@ -43,7 +42,7 @@ namespace {
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.39", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.41", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -73,7 +72,7 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	BScrollView* playlistScrollView = new BScrollView("playlist scroll view",
 		fPlaylistView, 0, false, true);
 
-	fPlayButton = new BButton("Play", new BMessage(kOpenSelectedFile));
+	fPlayButton = new BButton("Play", new BMessage(kStartPlayback));
 	fPlayButton->SetEnabled(false);
 	fPauseButton = new BButton("Pause", new BMessage(kPausePlayback));
 	fPreviousButton = new BButton("Previous", new BMessage(kPreviousFile));
@@ -143,7 +142,7 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 		case kProjectFolderChosen:
 			ProjectFolderChosen(message);
 			break;
-		case kOpenSelectedFile:
+		case kStartPlayback:
 			OpenSelectedFile();
 			break;
 		case kPausePlayback:
@@ -179,6 +178,34 @@ bool ShowreelWindow::QuitRequested() {
 	StopPlayback();
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	return true;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::SetCloseWhenFinished(bool closeWhenFinished) {
+	fCloseShowreelCheckBox->SetValue(closeWhenFinished
+		? B_CONTROL_ON : B_CONTROL_OFF);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::SetProjectFolder(const char* folderPath) {
+	if (folderPath == NULL || folderPath[0] == '\0')
+		return;
+
+	PopulatePlaylist(folderPath);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::SetTiming(float topDwellSeconds,
+	int32 scrollLinesPerSecond, float bottomDwellSeconds) {
+	fTopDwellSlider->SetValue(static_cast<int32>(topDwellSeconds * 10.0f
+		+ 0.5f));
+	fScrollSpeedSlider->SetValue(scrollLinesPerSecond);
+	fBottomDwellSlider->SetValue(static_cast<int32>(bottomDwellSeconds * 10.0f
+		+ 0.5f));
+	UpdateTimingLabels();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
