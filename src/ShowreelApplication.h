@@ -2,7 +2,11 @@
 #define SHOWREEL_APPLICATION_H
 
 #include <Application.h>
+#include <Entry.h>
 #include <String.h>
+
+
+class ShowreelWindow;
 
 
 struct ShowreelOptions {
@@ -20,10 +24,14 @@ class ShowreelApplication : public BApplication {
 		ShowreelApplication(const ShowreelOptions& options);
 
 		void AboutRequested() override;
+		void RefsReceived(BMessage* message) override;
 		void ReadyToRun() override;
 
 	private:
+		void SetProjectFolder(const entry_ref& reference);
+
 		ShowreelOptions fOptions;
+		ShowreelWindow* fWindow;
 	};
 
 #endif

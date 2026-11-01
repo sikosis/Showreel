@@ -42,7 +42,7 @@ namespace {
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.41", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.42", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -145,6 +145,13 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 		case kStartPlayback:
 			OpenSelectedFile();
 			break;
+		case kSetProjectFolder:
+		{
+			const char* folderPath = NULL;
+			if (message->FindString("path", &folderPath) == B_OK)
+				SetProjectFolder(folderPath);
+			break;
+		}
 		case kPausePlayback:
 			PausePlayback();
 			break;

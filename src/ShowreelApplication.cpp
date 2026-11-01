@@ -5,7 +5,11 @@
 #include <Alert.h>
 #include <AppFileInfo.h>
 #include <Bitmap.h>
+#include <Directory.h>
+#include <Entry.h>
 #include <File.h>
+#include <Message.h>
+#include <Path.h>
 #include <Roster.h>
 #include <String.h>
 
@@ -13,7 +17,8 @@
 ShowreelApplication::ShowreelApplication(const ShowreelOptions& options)
 	:
 	BApplication("application/x-vnd.Sikosis-Showreel"),
-	fOptions(options) {
+	fOptions(options),
+	fWindow(NULL) {
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -52,16 +57,48 @@ void ShowreelApplication::AboutRequested() {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelApplication::RefsReceived(BMessage* message) {
+	entry_ref reference;
+	for (int32 index = 0;
+		message->FindRef("refs", index, &reference) == B_OK; ++index) {
+		BDirectory directory(&reference);
+		if (directory.InitCheck() == B_OK) {
+			SetProjectFolder(reference);
+			return;
+		}
+	}
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelApplication::ReadyToRun() {
-	ShowreelWindow* window = new ShowreelWindow();
-	window->SetTiming(fOptions.topDwellSeconds,
+	fWindow = new ShowreelWindow();
+	fWindow->SetTiming(fOptions.topDwellSeconds,
 		fOptions.scrollLinesPerSecond, fOptions.bottomDwellSeconds);
-	window->SetCloseWhenFinished(fOptions.closeShowreel);
+	fWindow->SetCloseWhenFinished(fOptions.closeShowreel);
 	if (!fOptions.projectFolder.IsEmpty())
-		window->SetProjectFolder(fOptions.projectFolder.String());
-	window->Show();
+		fWindow->SetProjectFolder(fOptions.projectFolder.String());
+	fWindow->Show();
 	if (fOptions.play)
-		window->PostMessage(ShowreelWindow::kStartPlayback);
+		fWindow->PostMessage(ShowreelWindow::kStartPlayback);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelApplication::SetProjectFolder(const entry_ref& reference) {
+	BEntry entry(&reference, true);
+	BPath path;
+	if (entry.GetPath(&path) != B_OK)
+		return;
+
+	if (fWindow == NULL) {
+		fOptions.projectFolder = path.Path();
+		return;
+	}
+
+	BMessage message(ShowreelWindow::kSetProjectFolder);
+	message.AddString("path", path.Path());
+	fWindow->PostMessage(&message);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

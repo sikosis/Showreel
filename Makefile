@@ -15,24 +15,32 @@ WARNINGS = ALL
 CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.41
+VERSION = 0.42
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build
 PACKAGE_ARCHITECTURE = $(CPU)
 PACKAGE_FILE = showreel-$(VERSION)-$(PACKAGE_REVISION)-$(PACKAGE_ARCHITECTURE).hpkg
+TRACKER_ADDONS_DIR ?= /boot/home/config/non-packaged/add-ons/Tracker
+TRACKER_ADDON_NAME = Open in ShowReel
 
 include /boot/system/develop/etc/makefile-engine
 
 .PHONY: package package-clean
+
+install::
+	mkdir -p "$(TRACKER_ADDONS_DIR)"
+	copyattr --data -- "$(TARGET)" "$(TRACKER_ADDONS_DIR)/$(TRACKER_ADDON_NAME)"
 
 package: $(PACKAGE_FILE)
 
 $(PACKAGE_FILE): $(TARGET) packaging/PackageInfo.in packaging/Copyrighted
 	rm -rf "$(PACKAGE_BUILD_DIR)"
 	mkdir -p "$(PACKAGE_BUILD_DIR)/apps"
+	mkdir -p "$(PACKAGE_BUILD_DIR)/add-ons/Tracker"
 	mkdir -p "$(PACKAGE_BUILD_DIR)/data/licenses"
 	cp -f "$(TARGET)" "$(PACKAGE_BUILD_DIR)/apps/$(NAME)"
+	ln -s ../../apps/$(NAME) "$(PACKAGE_BUILD_DIR)/add-ons/Tracker/$(TRACKER_ADDON_NAME)"
 	cp -f packaging/Copyrighted "$(PACKAGE_BUILD_DIR)/data/licenses/Copyrighted"
 	sed \
 		-e 's/@VERSION@/$(VERSION)/g' \

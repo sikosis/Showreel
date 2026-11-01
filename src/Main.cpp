@@ -2,7 +2,10 @@
 
 #include <Directory.h>
 #include <Entry.h>
+#include <Message.h>
 #include <Path.h>
+#include <Roster.h>
+#include <add-ons/tracker/TrackerAddOn.h>
 
 #include <cerrno>
 #include <cmath>
@@ -78,6 +81,35 @@ bool SetProjectFolder(const char* path, ShowreelOptions& options) {
 
 
 } // namespace
+
+
+extern "C" void process_refs(entry_ref directoryReference, BMessage* message,
+	void* reserved) {
+	(void)reserved;
+
+	entry_ref projectReference;
+	bool foundProject = false;
+	for (int32 index = 0;
+		message->FindRef("refs", index, &projectReference) == B_OK; ++index) {
+		BEntry entry(&projectReference, true);
+		if (entry.InitCheck() == B_OK && entry.IsDirectory()) {
+			foundProject = true;
+			break;
+		}
+	}
+
+	if (!foundProject) {
+		BEntry entry(&directoryReference, true);
+		if (entry.InitCheck() != B_OK || !entry.IsDirectory())
+			return;
+		projectReference = directoryReference;
+	}
+
+	BMessage references(B_REFS_RECEIVED);
+	references.AddRef("refs", &projectReference);
+	be_roster->Launch("application/x-vnd.Sikosis-Showreel", &references);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
 
 
 int main(int argc, char** argv) {

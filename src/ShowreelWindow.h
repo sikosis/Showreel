@@ -23,6 +23,7 @@ class BStringView;
 class ShowreelWindow : public BWindow {
 public:
 	static constexpr uint32 kStartPlayback = 'opsf';
+	static constexpr uint32 kSetProjectFolder = 'spfd';
 
 	ShowreelWindow();
 	~ShowreelWindow() override;

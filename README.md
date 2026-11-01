@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.41-f5a623" alt="Version v0.41">
+  <img src="https://img.shields.io/badge/version-v0.42-f5a623" alt="Version v0.42">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -33,6 +33,13 @@ Showreel --play --top-dwell 5 --scroll-speed 8 --bottom-dwell 5 \
 
 Run `Showreel --help` for the accepted ranges and all options. Without command-
 line arguments, Showreel retains the same interactive defaults.
+
+## Tracker add-on
+
+`make install` installs both ShowReel and an **Open in ShowReel** Tracker
+add-on. Right-click a project folder in Tracker and choose the add-on to open
+that folder in ShowReel. Playback remains stopped so its settings can be
+reviewed before pressing Play. The packaged HPKG includes the same add-on.
 
 ## Building
 
