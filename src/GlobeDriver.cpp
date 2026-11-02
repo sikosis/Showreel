@@ -13,7 +13,6 @@ namespace {
 	const bigtime_t kGlobeReplyTimeout = 5000000;
 	const bigtime_t kGlobeOpenReplyTimeout = 15000000;
 	const bigtime_t kGlobeStartDelay = 50000;
-	const bigtime_t kGlobeStartupSettleDelay = 250000;
 	const int32 kGlobeStartAttempts = 40;
 
 }
@@ -66,10 +65,10 @@ status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 	if (status != B_OK)
 		return status;
 
-	status = be_roster->Launch(kGlobeSignature);
+	const char* arguments[] = { "Globe", "--automation" };
+	status = be_roster->Launch(kGlobeSignature, 2, arguments);
 	if (status != B_OK && status != B_ALREADY_RUNNING)
 		return status;
-	bool launchedGlobe = status == B_OK;
 
 	BMessenger globe;
 	for (int32 attempt = 0; attempt < kGlobeStartAttempts; ++attempt) {
@@ -80,8 +79,6 @@ status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 	}
 	if (!globe.IsValid())
 		return B_TIMED_OUT;
-	if (launchedGlobe)
-		snooze(kGlobeStartupSettleDelay);
 
 	BMessage request(kMessageGlobeAutomationOpen);
 	request.AddRef("refs", &documentReference);

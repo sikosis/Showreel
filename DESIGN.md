@@ -53,9 +53,21 @@ The player never talks to Tracker or Globe directly; it asks the driver layer, w
 
 **Slow scrolling.** The scroller computes the document's scrollable range once, then advances on a timer, for example every 50 ms. Speed is set in lines per second, so long files take longer and short files finish quickly. A file that fits in one window skips scrolling and just dwells.
 
-**Dwell at the bottom.** When the scroll bar reaches its maximum, the app waits for the configured dwell time (default 3 s), then closes the window. A short dwell at the top (default 1.5 s) lets the first lines register before scrolling starts.
+**Dwell at the bottom.** When the scroll bar reaches its maximum, the app waits
+for the configured dwell time (default 5 s), then closes the window. A dwell at
+the top (default 5 s) lets the first lines register before scrolling starts.
+
+**Monitor mode.** When enabled, ShowReel rescans the selected project for
+changes once per second. A changed or newly discovered viewable file is queued
+for five seconds, allowing saves to settle, then presented with the normal top
+dwell, scrolling and bottom dwell sequence. Repeated changes restart the
+five-second delay. After that one file closes, ShowReel returns to monitoring.
 
 **Closing safely.** The app only closes Globe documents opened with its session identifier. Showreel requests read-only presentation mode, so its documents cannot become modified and do not produce save prompts.
+
+**Emergency stop.** Pressing Escape in Globe's presentation window sends a
+stop request back to ShowReel. ShowReel closes its current Globe document,
+stops playback and returns its control window to the foreground.
 
 **Controls.** Pause freezes the timer; Next and Previous close the current window and jump; Stop closes the window and returns to the playlist. A loop option restarts from the first file after the last.
 
@@ -67,8 +79,9 @@ One small native window (Haiku Interface Kit) with a playlist on the left and th
 | --- | --- | --- | --- |
 | Project folder | none | any folder | Root for discovery and the Tracker window |
 | Scroll speed (lines/s) | 8 | 2 to 40 | How fast text moves |
-| Dwell at top (s) | 1.5 | 0 to 10 | Pause before scrolling |
-| Dwell at bottom (s) | 3 | 0 to 30 | Pause on the last lines |
+| Dwell at top (s) | 5 | 0 to 10 | Pause before scrolling |
+| Dwell at bottom (s) | 5 | 0 to 30 | Pause on the last lines |
+| Monitor mode | off | on or off | Present changed files after a five-second delay |
 | File filter | text and source | editable list | Which files join the playlist |
 | Loop | off | on or off | Restart after the last file |
 | Globe window | maximised | maximised or as is | Whether to resize Globe for the show |

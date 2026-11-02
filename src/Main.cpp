@@ -25,6 +25,7 @@ void PrintUsage(const char* programName) {
 		"  --top-dwell SECONDS     Pause before scrolling (0-10)\n"
 		"  --scroll-speed LINES    Scroll speed in lines/second (2-40)\n"
 		"  --bottom-dwell SECONDS  Pause after scrolling (0-30)\n"
+		"  --monitor               Watch changed project files\n"
 		"  --close                 Close Showreel when playback finishes\n"
 		"  -h, --help              Show this help\n",
 		programName);
@@ -107,7 +108,7 @@ extern "C" void process_refs(entry_ref directoryReference, BMessage* message,
 
 	BMessage references(B_REFS_RECEIVED);
 	references.AddRef("refs", &projectReference);
-	be_roster->Launch("application/x-vnd.Sikosis-Showreel", &references);
+	be_roster->Launch("application/x-vnd.ShowReel", &references);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -119,6 +120,7 @@ int main(int argc, char** argv) {
 	options.scrollLinesPerSecond = 8;
 	options.bottomDwellSeconds = 5.0f;
 	options.closeShowreel = false;
+	options.monitorMode = false;
 
 	for (int32 index = 1; index < argc; ++index) {
 		const char* argument = argv[index];
@@ -132,6 +134,10 @@ int main(int argc, char** argv) {
 		}
 		if (strcmp(argument, "--close") == 0) {
 			options.closeShowreel = true;
+			continue;
+		}
+		if (strcmp(argument, "--monitor") == 0) {
+			options.monitorMode = true;
 			continue;
 		}
 
@@ -191,6 +197,10 @@ int main(int argc, char** argv) {
 
 	if (options.play && options.projectFolder.IsEmpty()) {
 		fprintf(stderr, "--play requires a project folder\n");
+		return 2;
+	}
+	if (options.monitorMode && options.projectFolder.IsEmpty()) {
+		fprintf(stderr, "--monitor requires a project folder\n");
 		return 2;
 	}
 

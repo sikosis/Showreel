@@ -16,6 +16,7 @@ struct ShowreelOptions {
 	int32 scrollLinesPerSecond;
 	float bottomDwellSeconds;
 	bool closeShowreel;
+	bool monitorMode;
 };
 
 
@@ -24,6 +25,7 @@ class ShowreelApplication : public BApplication {
 		ShowreelApplication(const ShowreelOptions& options);
 
 		void AboutRequested() override;
+		void MessageReceived(BMessage* message) override;
 		void RefsReceived(BMessage* message) override;
 		void ReadyToRun() override;
 

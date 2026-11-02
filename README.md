@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.42-f5a623" alt="Version v0.42">
+  <img src="https://img.shields.io/badge/version-v0.45-f5a623" alt="Version v0.45">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -19,7 +19,10 @@ control the active run. Top dwell, scrolling speed and bottom dwell are
 adjustable before playback; the top and bottom dwell defaults are five seconds.
 The playback status reports dwell countdowns, scroll progress, and files that
 fit without scrolling. Globe closes when the playlist finishes, and Showreel
-can optionally close too. Showreel opens near the top-left of the screen.
+can optionally close too. Globe starts in automation mode without an empty
+Untitled window. Pressing Escape during playback stops the slideshow, closes
+its Globe document and returns to ShowReel. Showreel opens near the top-left of
+the screen.
 
 ## Command-line automation
 
@@ -33,6 +36,17 @@ Showreel --play --top-dwell 5 --scroll-speed 8 --bottom-dwell 5 \
 
 Run `Showreel --help` for the accepted ranges and all options. Without command-
 line arguments, Showreel retains the same interactive defaults.
+
+Monitor mode can also be started from the command line:
+
+```sh
+Showreel --monitor /boot/home/projects/showreel
+```
+
+While Monitor Mode is enabled, ShowReel checks the selected project for changed
+viewable files. Each change is allowed to settle for five seconds, then that
+file is presented with the normal dwell and scrolling sequence. ShowReel
+returns to monitoring when the file finishes.
 
 ## Tracker add-on
 

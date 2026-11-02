@@ -2,15 +2,18 @@
 
 #include "EditorDriver.h"
 #include "GlobeDriver.h"
+#include "GlobeProtocol.h"
 #include "SourceFileDiscovery.h"
 
 #include <Alert.h>
 #include <Application.h>
 #include <Button.h>
 #include <CheckBox.h>
+#include <Entry.h>
 #include <FilePanel.h>
 #include <GroupLayout.h>
 #include <GroupView.h>
+#include <InterfaceDefs.h>
 #include <ListView.h>
 #include <Message.h>
 #include <MessageRunner.h>
@@ -23,6 +26,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <sys/stat.h>
 
 
 namespace {
@@ -34,15 +38,19 @@ namespace {
 	const uint32 kStopPlayback = 'stpp';
 	const uint32 kPlaybackTick = 'ptck';
 	const uint32 kTimingChanged = 'tmch';
+	const uint32 kMonitorModeChanged = 'mmch';
+	const uint32 kMonitorTick = 'mntk';
 	const uint32 kShowAbout = 'sabt';
 	const bigtime_t kPlaybackTickInterval = 50000;
+	const bigtime_t kMonitorTickInterval = 1000000;
+	const bigtime_t kMonitorDisplayDelay = 5000000;
 	const int32 kDefaultTopDwellTenths = 50;
 	const int32 kDefaultScrollLinesPerSecond = 8;
 	const int32 kDefaultBottomDwellTenths = 50;
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.42", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.45", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -52,17 +60,20 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fNextButton(NULL),
 	fStopButton(NULL),
 	fCloseShowreelCheckBox(NULL),
+	fMonitorModeCheckBox(NULL),
 	fPlaybackStatusView(NULL),
 	fTopDwellSlider(NULL),
 	fScrollSpeedSlider(NULL),
 	fBottomDwellSlider(NULL),
 	fEditorDriver(new GlobeDriver()),
 	fPlaybackRunner(NULL),
+	fMonitorRunner(NULL),
 	fPlayerState(PlayerState::Idle),
 	fStateDeadline(0),
 	fPauseStarted(0),
 	fCurrentIndex(-1),
-	fPaused(false) {
+	fPaused(false),
+	fMonitorPlayback(false) {
 	fCurrentDocument.session = 0;
 	BButton* chooseButton = new BButton("Choose Project Folder" B_UTF8_ELLIPSIS,
 		new BMessage(kChooseProjectFolder));
@@ -90,6 +101,9 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fBottomDwellSlider = new BSlider("bottom dwell", "", new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
 	fCloseShowreelCheckBox = new BCheckBox("close showreel", "Close ShowReel when Finished", NULL);
+	fMonitorModeCheckBox = new BCheckBox("monitor mode", "Monitor Mode",
+		new BMessage(kMonitorModeChanged));
+	fMonitorModeCheckBox->SetEnabled(false);
 	fPlaybackStatusView = new BStringView("playback status", "Ready");
 	UpdateTimingLabels();
 
@@ -99,6 +113,7 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	controls->AddChild(fTopDwellSlider);
 	controls->AddChild(fScrollSpeedSlider);
 	controls->AddChild(fBottomDwellSlider);
+	controls->AddChild(fMonitorModeCheckBox);
 	controls->AddChild(fCloseShowreelCheckBox);
 	controls->AddChild(fPlayButton);
 	controls->AddChild(fPauseButton);
@@ -122,11 +137,13 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 
 	SetLayout(new BGroupLayout(B_VERTICAL));
 	AddChild(contentView);
+	AddShortcut(B_ESCAPE, 0, new BMessage(kStopPlayback));
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
 ShowreelWindow::~ShowreelWindow() {
+	StopMonitorRunner();
 	StopPlayback();
 	delete fFolderPanel;
 	delete fEditorDriver;
@@ -164,11 +181,21 @@ void ShowreelWindow::MessageReceived(BMessage* message) {
 		case kStopPlayback:
 			StopPlayback();
 			break;
+		case kMessageShowreelStop:
+			StopPlayback();
+			Activate(true);
+			break;
 		case kPlaybackTick:
 			PlaybackTick();
 			break;
 		case kTimingChanged:
 			UpdateTimingLabels();
+			break;
+		case kMonitorModeChanged:
+			MonitorModeChanged();
+			break;
+		case kMonitorTick:
+			MonitorTick();
 			break;
 		case kShowAbout:
 			be_app->AboutRequested();
@@ -191,6 +218,14 @@ bool ShowreelWindow::QuitRequested() {
 
 void ShowreelWindow::SetCloseWhenFinished(bool closeWhenFinished) {
 	fCloseShowreelCheckBox->SetValue(closeWhenFinished ? B_CONTROL_ON : B_CONTROL_OFF);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::SetMonitorMode(bool monitorMode) {
+	fMonitorModeCheckBox->SetValue(monitorMode
+		? B_CONTROL_ON : B_CONTROL_OFF);
+	MonitorModeChanged();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -300,6 +335,65 @@ void ShowreelWindow::HandlePlaybackError(const char* operation,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+int32 ShowreelWindow::IndexOfFile(const char* path) const {
+	for (int32 index = 0;
+		index < static_cast<int32>(fPlaylistFiles.size()); ++index) {
+		if (fPlaylistFiles[index].path == path)
+			return index;
+	}
+
+	return -1;
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::MonitorModeChanged() {
+	if (fMonitorModeCheckBox->Value() == B_CONTROL_ON
+		&& !fProjectFolderPath.IsEmpty()) {
+		StartMonitorRunner();
+		return;
+	}
+
+	StopMonitorRunner();
+	if (fPlayerState == PlayerState::Idle)
+		fPlaybackStatusView->SetText("Ready");
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::MonitorTick() {
+	if (fMonitorModeCheckBox->Value() != B_CONTROL_ON
+		|| fProjectFolderPath.IsEmpty()) {
+		return;
+	}
+
+	UpdateMonitoredFiles(true);
+	if (fPlayerState != PlayerState::Idle || fPendingMonitorFiles.empty())
+		return;
+
+	auto nextFile = std::min_element(fPendingMonitorFiles.begin(),
+		fPendingMonitorFiles.end(),
+		[](const PendingMonitorFile& left, const PendingMonitorFile& right) {
+			return left.readyAt < right.readyAt;
+		});
+	bigtime_t now = system_time();
+	if (nextFile->readyAt > now) {
+		BPath path(nextFile->path.String());
+		BString status("Changed: ");
+		status << path.Leaf() << " (displaying in "
+			<< static_cast<int32>((nextFile->readyAt - now
+				+ 999999) / 1000000) << " s)";
+		fPlaybackStatusView->SetText(status.String());
+		return;
+	}
+
+	BString path(nextFile->path);
+	fPendingMonitorFiles.erase(nextFile);
+	StartMonitoredFile(path.String());
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::OpenSelectedFile() {
 	int32 selectedIndex = fPlaylistView->CurrentSelection();
 	if (selectedIndex < 0 || selectedIndex >= static_cast<int32>(fPlaylistFiles.size())	|| fPlaylistFiles[selectedIndex].skipped) {
@@ -310,6 +404,7 @@ void ShowreelWindow::OpenSelectedFile() {
 		return;
 	}
 
+	fMonitorPlayback = false;
 	StartFile(selectedIndex);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
@@ -392,14 +487,20 @@ void ShowreelWindow::PlaybackTick() {
 		return;
 	}
 
-	if (fPlayerState == PlayerState::BottomDwell && now >= fStateDeadline)
-		AdvanceToFile(1);
+	if (fPlayerState == PlayerState::BottomDwell && now >= fStateDeadline) {
+		if (fMonitorPlayback)
+			StopPlayback();
+		else
+			AdvanceToFile(1);
+	}
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
 void ShowreelWindow::PopulatePlaylist(const char* folderPath) {
+	StopMonitorRunner();
 	ClearPlaylist();
+	fProjectFolderPath = "";
 
 	SourceFileDiscovery discovery;
 	status_t status = discovery.Discover(folderPath, fPlaylistFiles);
@@ -407,8 +508,10 @@ void ShowreelWindow::PopulatePlaylist(const char* folderPath) {
 		BString folderLabel(folderPath);
 		folderLabel << " (could not read folder)";
 		fFolderPathView->SetText(folderLabel.String());
+		fMonitorModeCheckBox->SetEnabled(false);
 		return;
 	}
+	fProjectFolderPath = folderPath;
 
 	BString rootPrefix(folderPath);
 	if (!rootPrefix.EndsWith("/"))
@@ -434,6 +537,9 @@ void ShowreelWindow::PopulatePlaylist(const char* folderPath) {
 		}
 	}
 	fPlayButton->SetEnabled(hasViewableFile);
+	fMonitorModeCheckBox->SetEnabled(true);
+	if (fMonitorModeCheckBox->Value() == B_CONTROL_ON)
+		StartMonitorRunner();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -489,6 +595,36 @@ void ShowreelWindow::StartFile(int32 index) {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelWindow::StartMonitorRunner() {
+	if (fProjectFolderPath.IsEmpty() || fMonitorRunner != NULL)
+		return;
+
+	UpdateMonitoredFiles(false);
+	BMessage tickMessage(kMonitorTick);
+	fMonitorRunner = new BMessageRunner(BMessenger(this), &tickMessage,
+		kMonitorTickInterval);
+	if (fPlayerState == PlayerState::Idle)
+		fPlaybackStatusView->SetText("Monitoring for changes");
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::StartMonitoredFile(const char* path) {
+	int32 index = IndexOfFile(path);
+	if (index < 0) {
+		BString projectFolder(fProjectFolderPath);
+		PopulatePlaylist(projectFolder.String());
+		index = IndexOfFile(path);
+	}
+	if (index < 0 || fPlaylistFiles[index].skipped)
+		return;
+
+	fMonitorPlayback = true;
+	StartFile(index);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::StopPlayback() {
 	delete fPlaybackRunner;
 	fPlaybackRunner = NULL;
@@ -496,8 +632,19 @@ void ShowreelWindow::StopPlayback() {
 	fPlayerState = PlayerState::Idle;
 	fCurrentIndex = -1;
 	fPaused = false;
-	fPlaybackStatusView->SetText("Ready");
+	fMonitorPlayback = false;
+	fPlaybackStatusView->SetText(fMonitorRunner != NULL
+		? "Monitoring for changes" : "Ready");
 	UpdatePlaybackControls();
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::StopMonitorRunner() {
+	delete fMonitorRunner;
+	fMonitorRunner = NULL;
+	fMonitoredFiles.clear();
+	fPendingMonitorFiles.clear();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -508,13 +655,70 @@ bigtime_t ShowreelWindow::TopDwell() const {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelWindow::UpdateMonitoredFiles(bool queueChanges) {
+	SourceFileDiscovery discovery;
+	std::vector<DiscoveredFile> files;
+	if (discovery.Discover(fProjectFolderPath.String(), files) != B_OK)
+		return;
+
+	std::map<std::string, MonitoredFileState> currentFiles;
+	bigtime_t readyAt = system_time() + kMonitorDisplayDelay;
+	for (const DiscoveredFile& file : files) {
+		if (file.skipped)
+			continue;
+
+		BEntry entry(file.path.String(), true);
+		struct stat fileInformation;
+		if (entry.GetStat(&fileInformation) != B_OK)
+			continue;
+
+		std::string path(file.path.String());
+		MonitoredFileState state;
+		state.modificationSeconds = fileInformation.st_mtim.tv_sec;
+		state.modificationNanoseconds = fileInformation.st_mtim.tv_nsec;
+		state.size = fileInformation.st_size;
+		currentFiles[path] = state;
+
+		auto previous = fMonitoredFiles.find(path);
+		bool changed = previous == fMonitoredFiles.end()
+			|| previous->second.modificationSeconds
+				!= state.modificationSeconds
+			|| previous->second.modificationNanoseconds
+				!= state.modificationNanoseconds
+			|| previous->second.size != state.size;
+		if (!queueChanges || !changed)
+			continue;
+
+		bool alreadyPending = false;
+		for (PendingMonitorFile& pending : fPendingMonitorFiles) {
+			if (pending.path == file.path) {
+				pending.readyAt = readyAt;
+				alreadyPending = true;
+				break;
+			}
+		}
+		if (!alreadyPending) {
+			PendingMonitorFile pending;
+			pending.path = file.path;
+			pending.readyAt = readyAt;
+			fPendingMonitorFiles.push_back(pending);
+		}
+	}
+
+	fMonitoredFiles.swap(currentFiles);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::UpdatePlaybackControls() {
 	bool playing = fPlayerState != PlayerState::Idle;
 	bool hasViewableFile = FindViewableFile(0, 1) >= 0;
 	fPlayButton->SetEnabled(!playing && hasViewableFile);
 	fPauseButton->SetEnabled(playing);
-	fPreviousButton->SetEnabled(playing	&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);
-	fNextButton->SetEnabled(playing	&& FindViewableFile(fCurrentIndex + 1, 1) >= 0);
+	fPreviousButton->SetEnabled(playing && !fMonitorPlayback
+		&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);
+	fNextButton->SetEnabled(playing && !fMonitorPlayback
+		&& FindViewableFile(fCurrentIndex + 1, 1) >= 0);
 	fStopButton->SetEnabled(playing);
 	fPauseButton->SetLabel(fPaused ? "Resume" : "Pause");
 	fTopDwellSlider->SetEnabled(!playing);

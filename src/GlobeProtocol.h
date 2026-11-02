@@ -8,7 +8,8 @@ enum {
 	kMessageGlobeAutomationOpen = 'gaop',
 	kMessageGlobeAutomationGetScroll = 'gags',
 	kMessageGlobeAutomationSetScroll = 'gass',
-	kMessageGlobeAutomationClose = 'gacl'
+	kMessageGlobeAutomationClose = 'gacl',
+	kMessageShowreelStop = 'srst'
 };
 
 #endif

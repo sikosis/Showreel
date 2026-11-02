@@ -1,5 +1,6 @@
 #include "ShowreelApplication.h"
 
+#include "GlobeProtocol.h"
 #include "ShowreelWindow.h"
 
 #include <Alert.h>
@@ -48,6 +49,17 @@ void ShowreelApplication::AboutRequested() {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+void ShowreelApplication::MessageReceived(BMessage* message) {
+	if (message->what == kMessageShowreelStop && fWindow != NULL) {
+		fWindow->PostMessage(message);
+		return;
+	}
+
+	BApplication::MessageReceived(message);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelApplication::RefsReceived(BMessage* message) {
 	entry_ref reference;
 	for (int32 index = 0;
@@ -68,6 +80,7 @@ void ShowreelApplication::ReadyToRun() {
 	fWindow->SetCloseWhenFinished(fOptions.closeShowreel);
 	if (!fOptions.projectFolder.IsEmpty())
 		fWindow->SetProjectFolder(fOptions.projectFolder.String());
+	fWindow->SetMonitorMode(fOptions.monitorMode);
 	fWindow->Show();
 	if (fOptions.play)
 		fWindow->PostMessage(ShowreelWindow::kStartPlayback);

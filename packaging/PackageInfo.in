@@ -2,7 +2,7 @@ name showreel
 version @VERSION@-@REVISION@
 architecture @ARCHITECTURE@
 summary "Plays a project's source code like a slideshow"
-description "Showreel presents source files in Pe with automated, readable scrolling for demonstrations, recordings and kiosk displays."
+description "Showreel presents source files in Globe with automated, readable scrolling for demonstrations, recordings and kiosk displays."
 vendor "Sikosis"
 packager "Sikosis"
 copyrights { "Copyright 2026 Sikosis" }

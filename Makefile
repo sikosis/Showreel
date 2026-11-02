@@ -1,6 +1,6 @@
 NAME = Showreel
 TYPE = APP
-APP_MIME_SIG = application/x-vnd.Sikosis-Showreel
+APP_MIME_SIG = application/x-vnd.ShowReel
 SRCS = \
 	src/EditorDriver.cpp \
 	src/GlobeDriver.cpp \
@@ -15,7 +15,7 @@ WARNINGS = ALL
 CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.42
+VERSION = 0.45
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build
