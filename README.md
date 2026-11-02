@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.45-f5a623" alt="Version v0.45">
+  <img src="https://img.shields.io/badge/version-v0.46-f5a623" alt="Version v0.46">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>

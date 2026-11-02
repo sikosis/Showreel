@@ -65,8 +65,8 @@ status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 	if (status != B_OK)
 		return status;
 
-	const char* arguments[] = { "Globe", "--automation" };
-	status = be_roster->Launch(kGlobeSignature, 2, arguments);
+	const char* arguments[] = { "--automation" };
+	status = be_roster->Launch(kGlobeSignature, 1, arguments);
 	if (status != B_OK && status != B_ALREADY_RUNNING)
 		return status;
 
