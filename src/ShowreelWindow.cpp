@@ -47,10 +47,11 @@ namespace {
 	const int32 kDefaultTopDwellTenths = 50;
 	const int32 kDefaultScrollLinesPerSecond = 8;
 	const int32 kDefaultBottomDwellTenths = 50;
+	const int32 kDefaultFontSize = 16;
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.46", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.48", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -65,6 +66,7 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fTopDwellSlider(NULL),
 	fScrollSpeedSlider(NULL),
 	fBottomDwellSlider(NULL),
+	fFontSizeSlider(NULL),
 	fEditorDriver(new GlobeDriver()),
 	fPlaybackRunner(NULL),
 	fMonitorRunner(NULL),
@@ -100,6 +102,9 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	fScrollSpeedSlider->SetValue(kDefaultScrollLinesPerSecond);
 	fBottomDwellSlider = new BSlider("bottom dwell", "", new BMessage(kTimingChanged), 0, 300, B_HORIZONTAL);
 	fBottomDwellSlider->SetValue(kDefaultBottomDwellTenths);
+	fFontSizeSlider = new BSlider("font size", "", new BMessage(kTimingChanged),
+		10, 28, B_HORIZONTAL);
+	fFontSizeSlider->SetValue(kDefaultFontSize);
 	fCloseShowreelCheckBox = new BCheckBox("close showreel", "Close ShowReel when Finished", NULL);
 	fMonitorModeCheckBox = new BCheckBox("monitor mode", "Monitor Mode",
 		new BMessage(kMonitorModeChanged));
@@ -113,6 +118,7 @@ ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.
 	controls->AddChild(fTopDwellSlider);
 	controls->AddChild(fScrollSpeedSlider);
 	controls->AddChild(fBottomDwellSlider);
+	controls->AddChild(fFontSizeSlider);
 	controls->AddChild(fMonitorModeCheckBox);
 	controls->AddChild(fCloseShowreelCheckBox);
 	controls->AddChild(fPlayButton);
@@ -218,6 +224,13 @@ bool ShowreelWindow::QuitRequested() {
 
 void ShowreelWindow::SetCloseWhenFinished(bool closeWhenFinished) {
 	fCloseShowreelCheckBox->SetValue(closeWhenFinished ? B_CONTROL_ON : B_CONTROL_OFF);
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
+void ShowreelWindow::SetFontSize(int32 fontSize) {
+	fFontSizeSlider->SetValue(fontSize);
+	UpdateTimingLabels();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -564,6 +577,12 @@ float ShowreelWindow::ScrollLinesPerSecond() const {
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
+float ShowreelWindow::PresentationFontSize() const {
+	return static_cast<float>(fFontSizeSlider->Value());
+}
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 void ShowreelWindow::StartFile(int32 index) {
 	if (index < 0 || index >= static_cast<int32>(fPlaylistFiles.size())	|| fPlaylistFiles[index].skipped) {
 		return;
@@ -571,8 +590,13 @@ void ShowreelWindow::StartFile(int32 index) {
 
 	CloseCurrentDocument();
 	status_t status = fEditorDriver->OpenDocument(
-		fPlaylistFiles[index].path.String(), fCurrentDocument);
+		fPlaylistFiles[index].path.String(), PresentationFontSize(),
+		fCurrentDocument);
 	if (status != B_OK) {
+		if (fMonitorPlayback) {
+			StopPlayback();
+			return;
+		}
 		HandlePlaybackError("Globe could not open the selected file", status);
 		return;
 	}
@@ -705,6 +729,12 @@ void ShowreelWindow::UpdateMonitoredFiles(bool queueChanges) {
 		}
 	}
 
+	fPendingMonitorFiles.erase(std::remove_if(fPendingMonitorFiles.begin(),
+		fPendingMonitorFiles.end(),
+		[&currentFiles](const PendingMonitorFile& pending) {
+			return currentFiles.find(pending.path.String())
+				== currentFiles.end();
+		}), fPendingMonitorFiles.end());
 	fMonitoredFiles.swap(currentFiles);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
@@ -724,6 +754,7 @@ void ShowreelWindow::UpdatePlaybackControls() {
 	fTopDwellSlider->SetEnabled(!playing);
 	fScrollSpeedSlider->SetEnabled(!playing);
 	fBottomDwellSlider->SetEnabled(!playing);
+	fFontSizeSlider->SetEnabled(!playing);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -736,6 +767,9 @@ void ShowreelWindow::UpdateTimingLabels() {
 	fScrollSpeedSlider->SetLabel(label.String());
 	label.SetToFormat("Bottom dwell: %.1f s", static_cast<double>(fBottomDwellSlider->Value()) / 10.0);
 	fBottomDwellSlider->SetLabel(label.String());
+	label.SetToFormat("Font size: %ld pt",
+		static_cast<long>(fFontSizeSlider->Value()));
+	fFontSizeSlider->SetLabel(label.String());
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 

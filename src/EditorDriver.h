@@ -26,7 +26,8 @@ class EditorDriver {
 
 		virtual status_t CloseDocument(const EditorDocument& document) = 0;
 		virtual status_t GetScrollState(const EditorDocument& document,	EditorScrollState& state) = 0;
-		virtual status_t OpenDocument(const char* path,	EditorDocument& document) = 0;
+		virtual status_t OpenDocument(const char* path, float fontSize,
+			EditorDocument& document) = 0;
 		virtual status_t QuitEditor() = 0;
 		virtual status_t SetScrollValue(const EditorDocument& document,	float value, EditorScrollState& state) = 0;
 };

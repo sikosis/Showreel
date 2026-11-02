@@ -81,6 +81,7 @@ One small native window (Haiku Interface Kit) with a playlist on the left and th
 | Scroll speed (lines/s) | 8 | 2 to 40 | How fast text moves |
 | Dwell at top (s) | 5 | 0 to 10 | Pause before scrolling |
 | Dwell at bottom (s) | 5 | 0 to 30 | Pause on the last lines |
+| Presentation font (pt) | 16 | 10 to 28 | Temporary Globe font size |
 | Monitor mode | off | on or off | Present changed files after a five-second delay |
 | File filter | text and source | editable list | Which files join the playlist |
 | Loop | off | on or off | Restart after the last file |

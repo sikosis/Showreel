@@ -15,6 +15,7 @@ struct ShowreelOptions {
 	float topDwellSeconds;
 	int32 scrollLinesPerSecond;
 	float bottomDwellSeconds;
+	int32 fontSize;
 	bool closeShowreel;
 	bool monitorMode;
 };

@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.46-f5a623" alt="Version v0.46">
+  <img src="https://img.shields.io/badge/version-v0.48-f5a623" alt="Version v0.48">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -15,8 +15,9 @@ files. Markdown and project-automation scripts remain visible but are greyed out
 and skipped during playback. Play now opens each viewable file in Globe, dwells
 at the top, fits and centres the Globe window within the screen, scrolls it,
 dwells at the bottom, closes it and advances. Pause, Previous, Next and Stop
-control the active run. Top dwell, scrolling speed and bottom dwell are
-adjustable before playback; the top and bottom dwell defaults are five seconds.
+control the active run. Top dwell, scrolling speed, bottom dwell and presentation
+font size are adjustable before playback; the top and bottom dwell defaults are
+five seconds and the presentation font defaults to 16 pt.
 The playback status reports dwell countdowns, scroll progress, and files that
 fit without scrolling. Globe closes when the playlist finishes, and Showreel
 can optionally close too. Globe starts in automation mode without an empty
@@ -30,7 +31,7 @@ Every playback setting can be supplied when launching Showreel. A project may
 be given positionally or with `--project`:
 
 ```sh
-Showreel --play --top-dwell 5 --scroll-speed 8 --bottom-dwell 5 \
+Showreel --play --top-dwell 5 --scroll-speed 8 --bottom-dwell 5 --font-size 16 \
 	--close /boot/home/projects/showreel
 ```
 
@@ -46,7 +47,8 @@ Showreel --monitor /boot/home/projects/showreel
 While Monitor Mode is enabled, ShowReel checks the selected project for changed
 viewable files. Each change is allowed to settle for five seconds, then that
 file is presented with the normal dwell and scrolling sequence. ShowReel
-returns to monitoring when the file finishes.
+returns to monitoring when the file finishes. Files removed or renamed during
+the settle delay are discarded quietly as normal build activity.
 
 ## Tracker add-on
 

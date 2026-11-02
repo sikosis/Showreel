@@ -77,6 +77,7 @@ void ShowreelApplication::RefsReceived(BMessage* message) {
 void ShowreelApplication::ReadyToRun() {
 	fWindow = new ShowreelWindow();
 	fWindow->SetTiming(fOptions.topDwellSeconds, fOptions.scrollLinesPerSecond, fOptions.bottomDwellSeconds);
+	fWindow->SetFontSize(fOptions.fontSize);
 	fWindow->SetCloseWhenFinished(fOptions.closeShowreel);
 	if (!fOptions.projectFolder.IsEmpty())
 		fWindow->SetProjectFolder(fOptions.projectFolder.String());

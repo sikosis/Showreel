@@ -3,11 +3,11 @@ resource app_signature "application/x-vnd.ShowReel";
 resource app_version {
 	major = 0,
 	middle = 4,
-	minor = 6,
+	minor = 8,
 	variety = B_APPV_DEVELOPMENT,
 	internal = 0,
-	short_info = "Showreel v0.46",
-	long_info = "Showreel v0.46 - play source code like a slideshow"
+	short_info = "Showreel v0.48",
+	long_info = "Showreel v0.48 - play source code like a slideshow"
 };
 
 resource large_icon array {

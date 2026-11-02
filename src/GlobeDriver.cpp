@@ -54,7 +54,8 @@ status_t GlobeDriver::GetScrollState(const EditorDocument& document,
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 
-status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
+status_t GlobeDriver::OpenDocument(const char* path, float fontSize,
+	EditorDocument& document) {
 	document.session = 0;
 	document.target = BMessenger();
 	if (path == NULL || path[0] == '\0')
@@ -82,6 +83,7 @@ status_t GlobeDriver::OpenDocument(const char* path, EditorDocument& document) {
 
 	BMessage request(kMessageGlobeAutomationOpen);
 	request.AddRef("refs", &documentReference);
+	request.AddFloat("font_size", fontSize);
 	BMessage reply;
 	status = globe.SendMessage(&request, &reply, kGlobeReplyTimeout,
 		kGlobeOpenReplyTimeout);

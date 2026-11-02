@@ -35,6 +35,7 @@ public:
 	void MessageReceived(BMessage* message) override;
 	bool QuitRequested() override;
 	void SetCloseWhenFinished(bool closeWhenFinished);
+	void SetFontSize(int32 fontSize);
 	void SetMonitorMode(bool monitorMode);
 	void SetProjectFolder(const char* folderPath);
 	void SetTiming(float topDwellSeconds, int32 scrollLinesPerSecond,
@@ -81,6 +82,7 @@ private:
 	void StopMonitorRunner();
 	void UpdateMonitoredFiles(bool queueChanges);
 	bigtime_t BottomDwell() const;
+	float PresentationFontSize() const;
 	float ScrollLinesPerSecond() const;
 	bigtime_t TopDwell() const;
 	void UpdatePlaybackControls();
@@ -100,6 +102,7 @@ private:
 	BSlider* fTopDwellSlider;
 	BSlider* fScrollSpeedSlider;
 	BSlider* fBottomDwellSlider;
+	BSlider* fFontSizeSlider;
 	EditorDriver* fEditorDriver;
 	BMessageRunner* fPlaybackRunner;
 	BMessageRunner* fMonitorRunner;

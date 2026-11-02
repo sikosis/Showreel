@@ -25,6 +25,7 @@ void PrintUsage(const char* programName) {
 		"  --top-dwell SECONDS     Pause before scrolling (0-10)\n"
 		"  --scroll-speed LINES    Scroll speed in lines/second (2-40)\n"
 		"  --bottom-dwell SECONDS  Pause after scrolling (0-30)\n"
+		"  --font-size POINTS      Presentation font size (10-28)\n"
 		"  --monitor               Watch changed project files\n"
 		"  --close                 Close Showreel when playback finishes\n"
 		"  -h, --help              Show this help\n",
@@ -119,6 +120,7 @@ int main(int argc, char** argv) {
 	options.topDwellSeconds = 5.0f;
 	options.scrollLinesPerSecond = 8;
 	options.bottomDwellSeconds = 5.0f;
+	options.fontSize = 16;
 	options.closeShowreel = false;
 	options.monitorMode = false;
 
@@ -144,7 +146,8 @@ int main(int argc, char** argv) {
 		if (strcmp(argument, "--project") == 0
 			|| strcmp(argument, "--top-dwell") == 0
 			|| strcmp(argument, "--scroll-speed") == 0
-			|| strcmp(argument, "--bottom-dwell") == 0) {
+			|| strcmp(argument, "--bottom-dwell") == 0
+			|| strcmp(argument, "--font-size") == 0) {
 			if (++index >= argc) {
 				fprintf(stderr, "%s requires a value\n", argument);
 				return 2;
@@ -170,6 +173,11 @@ int main(int argc, char** argv) {
 				if (!ParseInteger(value, 2, 40,
 					options.scrollLinesPerSecond)) {
 					fprintf(stderr, "Invalid scroll speed: %s\n", value);
+					return 2;
+				}
+			} else if (strcmp(argument, "--font-size") == 0) {
+				if (!ParseInteger(value, 10, 28, options.fontSize)) {
+					fprintf(stderr, "Invalid font size: %s\n", value);
 					return 2;
 				}
 			} else if (!ParseFloat(value, 0.0f, 30.0f,
