@@ -8,10 +8,8 @@
 
 #include <String.h>
 
-#include <ctime>
 #include <map>
 #include <string>
-#include <sys/types.h>
 #include <vector>
 
 
@@ -50,9 +48,7 @@ private:
 	};
 
 	struct MonitoredFileState {
-		time_t modificationSeconds;
-		long modificationNanoseconds;
-		off_t size;
+		uint64 fingerprint;
 	};
 
 	struct PendingMonitorFile {

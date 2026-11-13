@@ -15,7 +15,7 @@ WARNINGS = ALL
 CXXFLAGS += -std=c++17
 LOCALES =
 
-VERSION = 0.49
+VERSION = 0.5
 PACKAGE_REVISION = 1
 INSTALL_DIR ?= /boot/home/config/non-packaged/apps
 PACKAGE_BUILD_DIR = package-build

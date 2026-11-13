@@ -10,6 +10,7 @@
 #include <Button.h>
 #include <CheckBox.h>
 #include <Entry.h>
+#include <File.h>
 #include <FilePanel.h>
 #include <GroupLayout.h>
 #include <GroupView.h>
@@ -26,7 +27,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <sys/stat.h>
 
 
 namespace {
@@ -48,10 +48,36 @@ namespace {
 	const int32 kDefaultScrollLinesPerSecond = 8;
 	const int32 kDefaultBottomDwellTenths = 50;
 	const int32 kDefaultFontSize = 16;
+
+
+	status_t FingerprintFile(const char* path, uint64& fingerprint) {
+		BFile file(path, B_READ_ONLY);
+		status_t status = file.InitCheck();
+		if (status != B_OK)
+			return status;
+
+		fingerprint = 14695981039346656037ULL;
+		uint8 buffer[8192];
+		while (true) {
+			ssize_t bytesRead = file.Read(buffer, sizeof(buffer));
+			if (bytesRead < 0)
+				return static_cast<status_t>(bytesRead);
+			if (bytesRead == 0)
+				return B_OK;
+
+			for (ssize_t index = 0; index < bytesRead; ++index) {
+				fingerprint ^= buffer[index];
+				fingerprint *= 1099511628211ULL;
+			}
+		}
+	}
+	//---------------------------------------------------------------------------------------------------------------------------------//
+
+
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.49", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.5", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -691,25 +717,16 @@ void ShowreelWindow::UpdateMonitoredFiles(bool queueChanges) {
 		if (file.skipped)
 			continue;
 
-		BEntry entry(file.path.String(), true);
-		struct stat fileInformation;
-		if (entry.GetStat(&fileInformation) != B_OK)
+		MonitoredFileState state;
+		if (FingerprintFile(file.path.String(), state.fingerprint) != B_OK)
 			continue;
 
 		std::string path(file.path.String());
-		MonitoredFileState state;
-		state.modificationSeconds = fileInformation.st_mtim.tv_sec;
-		state.modificationNanoseconds = fileInformation.st_mtim.tv_nsec;
-		state.size = fileInformation.st_size;
 		currentFiles[path] = state;
 
 		auto previous = fMonitoredFiles.find(path);
 		bool changed = previous == fMonitoredFiles.end()
-			|| previous->second.modificationSeconds
-				!= state.modificationSeconds
-			|| previous->second.modificationNanoseconds
-				!= state.modificationNanoseconds
-			|| previous->second.size != state.size;
+			|| previous->second.fingerprint != state.fingerprint;
 		if (!queueChanges || !changed)
 			continue;
 

@@ -1,7 +1,7 @@
 <h1 align="center">showreel</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.49-f5a623" alt="Version v0.49">
+  <img src="https://img.shields.io/badge/version-v0.5-f5a623" alt="Version v0.5">
   <img src="https://img.shields.io/badge/platform-Haiku-ffcc00" alt="Platform: Haiku">
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599c" alt="C++17">
 </p>
@@ -50,6 +50,8 @@ file is presented with the normal dwell and scrolling sequence. ShowReel
 returns to monitoring when the file finishes. Files removed or renamed during
 the settle delay are discarded quietly as normal build activity. Normal Play is
 disabled while monitoring, so unchanged playlist files are never presented.
+Changes are detected from file contents rather than timestamp metadata, avoiding
+repeat presentations caused by unstable filesystem timestamps.
 
 ## Tracker add-on
 
