@@ -62,6 +62,7 @@ changes once per second. A changed or newly discovered viewable file is queued
 for five seconds, allowing saves to settle, then presented with the normal top
 dwell, scrolling and bottom dwell sequence. Repeated changes restart the
 five-second delay. After that one file closes, ShowReel returns to monitoring.
+Normal playlist playback is disabled while Monitor Mode is active.
 
 **Closing safely.** The app only closes Globe documents opened with its session identifier. Showreel requests read-only presentation mode, so its documents cannot become modified and do not produce save prompts.
 

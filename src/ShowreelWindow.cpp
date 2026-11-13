@@ -51,7 +51,7 @@ namespace {
 }
 
 
-ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.48", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
+ShowreelWindow::ShowreelWindow() : BWindow(BRect(5, 28, 730, 470), "ShowReel v0.49", B_TITLED_WINDOW,	B_AUTO_UPDATE_SIZE_LIMITS),
 	fFolderPanel(NULL),
 	fFolderPathView(NULL),
 	fPlaylistView(NULL),
@@ -363,13 +363,17 @@ int32 ShowreelWindow::IndexOfFile(const char* path) const {
 void ShowreelWindow::MonitorModeChanged() {
 	if (fMonitorModeCheckBox->Value() == B_CONTROL_ON
 		&& !fProjectFolderPath.IsEmpty()) {
+		if (fPlayerState != PlayerState::Idle)
+			StopPlayback();
 		StartMonitorRunner();
+		UpdatePlaybackControls();
 		return;
 	}
 
 	StopMonitorRunner();
 	if (fPlayerState == PlayerState::Idle)
 		fPlaybackStatusView->SetText("Ready");
+	UpdatePlaybackControls();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -408,6 +412,9 @@ void ShowreelWindow::MonitorTick() {
 
 
 void ShowreelWindow::OpenSelectedFile() {
+	if (fMonitorModeCheckBox->Value() == B_CONTROL_ON)
+		return;
+
 	int32 selectedIndex = fPlaylistView->CurrentSelection();
 	if (selectedIndex < 0 || selectedIndex >= static_cast<int32>(fPlaylistFiles.size())	|| fPlaylistFiles[selectedIndex].skipped) {
 		selectedIndex = FindViewableFile(0, 1);
@@ -542,17 +549,10 @@ void ShowreelWindow::PopulatePlaylist(const char* folderPath) {
 	BString folderLabel(folderPath);
 	folderLabel << " (" << static_cast<int32>(fPlaylistFiles.size()) << " files)";
 	fFolderPathView->SetText(folderLabel.String());
-	bool hasViewableFile = false;
-	for (const DiscoveredFile& file : fPlaylistFiles) {
-		if (!file.skipped) {
-			hasViewableFile = true;
-			break;
-		}
-	}
-	fPlayButton->SetEnabled(hasViewableFile);
 	fMonitorModeCheckBox->SetEnabled(true);
 	if (fMonitorModeCheckBox->Value() == B_CONTROL_ON)
 		StartMonitorRunner();
+	UpdatePlaybackControls();
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -743,7 +743,8 @@ void ShowreelWindow::UpdateMonitoredFiles(bool queueChanges) {
 void ShowreelWindow::UpdatePlaybackControls() {
 	bool playing = fPlayerState != PlayerState::Idle;
 	bool hasViewableFile = FindViewableFile(0, 1) >= 0;
-	fPlayButton->SetEnabled(!playing && hasViewableFile);
+	bool monitoring = fMonitorModeCheckBox->Value() == B_CONTROL_ON;
+	fPlayButton->SetEnabled(!playing && !monitoring && hasViewableFile);
 	fPauseButton->SetEnabled(playing);
 	fPreviousButton->SetEnabled(playing && !fMonitorPlayback
 		&& FindViewableFile(fCurrentIndex - 1, -1) >= 0);

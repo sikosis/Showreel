@@ -83,7 +83,7 @@ void ShowreelApplication::ReadyToRun() {
 		fWindow->SetProjectFolder(fOptions.projectFolder.String());
 	fWindow->SetMonitorMode(fOptions.monitorMode);
 	fWindow->Show();
-	if (fOptions.play)
+	if (fOptions.play && !fOptions.monitorMode)
 		fWindow->PostMessage(ShowreelWindow::kStartPlayback);
 }
 //---------------------------------------------------------------------------------------------------------------------------------//
